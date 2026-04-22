@@ -1,209 +1,1817 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SEO Inspector Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    html.light {
+      color-scheme: light;
+    }
+    html.light body {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    html.light .panel {
+      background: #ffffff;
+      border-color: #e2e8f0;
+    }
+    html.light .muted {
+      color: #475569;
+    }
+    html.light .subtle {
+      color: #64748b;
+    }
+    html.light .soft {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+    .scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
+    .scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
+    .scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .tab-active {
+      border-color: #3b82f6 !important;
+      background: rgba(59,130,246,.12);
+      color: #fff;
+    }
+    html.light .tab-active {
+      color: #0f172a;
+      background: rgba(59,130,246,.08);
+    }
+    .ring-gauge {
+      background: conic-gradient(var(--gauge-color) var(--gauge-deg), #1f2937 0deg);
+    }
+    html.light .ring-gauge {
+      background: conic-gradient(var(--gauge-color) var(--gauge-deg), #e2e8f0 0deg);
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .skeleton {
+      position: relative;
+      overflow: hidden;
+      background: #111827;
+    }
+    html.light .skeleton { background: #e2e8f0; }
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+  </style>
 </head>
 
-<body class="bg-black text-white min-h-screen">
+<body class="min-h-screen bg-[#070b12] text-slate-100">
+  <div class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#070b12]/95 backdrop-blur">
+    <div class="mx-auto max-w-7xl px-3 py-3 md:px-4">
+      <div class="flex flex-col gap-3">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h1 class="text-lg font-semibold tracking-tight md:text-2xl">SEO Inspector Pro</h1>
+            <p class="text-xs text-slate-400 md:text-sm">crawl, preview, diagnose, and score a site in one panel</p>
+          </div>
+          <button id="openSettingsBtn" class="rounded-xl border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 md:text-sm">
+            Settings
+          </button>
+        </div>
 
-<div id="toast" class="fixed top-4 right-4 space-y-2 z-50"></div>
+        <div class="flex flex-col gap-2 md:flex-row">
+          <input id="urlInput" type="url" placeholder="https://example.com"
+            class="w-full flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none ring-0 placeholder:text-slate-500 focus:border-blue-500 md:text-base" />
+          <button id="runBtn"
+            class="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 active:bg-blue-700 md:w-36 md:text-base">
+            Run
+          </button>
+        </div>
 
-<div class="p-4 border-b border-gray-800">
-  <div class="flex flex-col sm:flex-row gap-2">
-    <input id="url" class="flex-1 p-3 bg-gray-900 border rounded"
-      placeholder="https://example.com">
-    <button id="run" class="bg-blue-600 px-5 py-3 rounded">Run</button>
-  </div>
-  <div class="flex justify-between text-sm mt-2 text-gray-400">
-    <span id="status">Idle</span>
-    <span id="mode">proxy</span>
-  </div>
-</div>
+        <div class="flex items-center justify-between gap-3">
+          <div id="status" class="text-xs text-slate-400 md:text-sm">Idle</div>
+          <div id="fetchModeBadge" class="rounded-full border border-slate-700 px-3 py-1 text-[11px] text-slate-400">
+            direct
+          </div>
+        </div>
 
-<div class="p-4 grid gap-4 md:grid-cols-[260px_1fr]">
-  <div id="summary" class="bg-gray-900 p-3 rounded"></div>
-
-  <div>
-    <div class="flex gap-2 mb-3">
-      <button class="tab border px-3 py-2 rounded" data-tab="overview">Overview</button>
-      <button class="tab border px-3 py-2 rounded" data-tab="sitemap">Sitemap</button>
-      <button class="tab border px-3 py-2 rounded" data-tab="robots">Robots</button>
+        <div class="scrollbar -mx-1 overflow-x-auto pb-1">
+          <div class="flex min-w-max gap-2 px-1">
+            <button data-tab="overview" class="tabBtn tab-active rounded-xl border border-slate-700 px-4 py-2 text-sm">Overview</button>
+            <button data-tab="robots" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Robots</button>
+            <button data-tab="sitemap" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Sitemap</button>
+            <button data-tab="page" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Page</button>
+            <button data-tab="meta" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Meta</button>
+            <button data-tab="social" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Social</button>
+            <button data-tab="accessibility" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Accessibility</button>
+            <button data-tab="schema" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Schema</button>
+            <button data-tab="performance" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Performance</button>
+            <button data-tab="settings" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Settings</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="content"></div>
   </div>
-</div>
 
-<script>
+  <main class="mx-auto max-w-7xl px-3 py-4 md:px-4 md:py-6">
+    <div id="root" class="grid gap-4 md:grid-cols-[340px_minmax(0,1fr)]">
+      <aside class="space-y-4">
+        <section id="summaryPanel" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10"></section>
+        <section id="issuePanel" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10"></section>
+        <section id="quickPanel" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10"></section>
+      </aside>
 
-const state = {
-  url:"",
-  tab:"overview",
-  page:null,
-  sitemap:[],
-  robots:""
-};
+      <section class="min-w-0 space-y-4">
+        <div id="content" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10 md:p-5"></div>
+      </section>
+    </div>
+  </main>
 
-const $ = id => document.getElementById(id);
+  <div id="settingsDrawer" class="fixed inset-0 z-40 hidden">
+    <div id="settingsOverlay" class="absolute inset-0 bg-black/70"></div>
+    <div class="absolute right-0 top-0 h-full w-full max-w-lg overflow-y-auto border-l border-slate-800 bg-[#08101c] p-4 shadow-2xl shadow-black/50">
+      <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <h2 class="text-lg font-semibold">Settings</h2>
+        <button id="closeSettingsBtn" class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:bg-slate-800">Close</button>
+      </div>
 
-// ===== TOAST
-function toast(msg){
-  const el=document.createElement("div");
-  el.className="bg-blue-600 px-3 py-2 rounded text-sm";
-  el.innerText=msg;
-  $("toast").appendChild(el);
-  setTimeout(()=>el.remove(),3000);
-}
+      <div class="mt-4 space-y-4">
+        <label class="block">
+          <span class="mb-2 block text-sm text-slate-300">Theme</span>
+          <select id="themeSelect" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+          </select>
+        </label>
 
-// ===== NORMALIZE
-function normalize(u){
-  return u.startsWith("http")?u:"https://"+u;
-}
+        <label class="block">
+          <span class="mb-2 block text-sm text-slate-300">Density</span>
+          <select id="densitySelect" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none">
+            <option value="comfortable">Comfortable</option>
+            <option value="compact">Compact</option>
+          </select>
+        </label>
 
-// ===== 🔥 STRONG PROXY FETCH
-async function fetchSafe(url){
+        <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-800 p-3">
+          <div>
+            <div class="text-sm font-medium">Use proxy for cross-origin fetch</div>
+            <div class="text-xs text-slate-400">Needed for real page data when CORS blocks direct access.</div>
+          </div>
+          <input id="useProxyToggle" type="checkbox" class="h-5 w-5 accent-blue-500">
+        </label>
 
-  const proxies = [
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`
-  ];
+        <label class="block">
+          <span class="mb-2 block text-sm text-slate-300">Proxy endpoint template</span>
+          <input id="proxyUrlInput" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none"
+            placeholder="https://your-domain.com/api/fetch?url={{url}}">
+          <div class="mt-2 text-xs text-slate-500">
+            Use <code>{{url}}</code> as the placeholder. The endpoint must return raw text for the requested URL.
+          </div>
+        </label>
 
-  for(const proxy of proxies){
-    try{
-      const res = await fetch(proxy(url));
-      if(!res.ok) continue;
+        <label class="block">
+          <span class="mb-2 block text-sm text-slate-300">PageSpeed API key (optional)</span>
+          <input id="pagespeedKeyInput" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none"
+            placeholder="AIza...">
+          <div class="mt-2 text-xs text-slate-500">
+            Used only for real PSI scoring. Without a key, heuristic performance scoring is shown.
+          </div>
+        </label>
 
-      const text = await res.text();
+        <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-800 p-3">
+          <div>
+            <div class="text-sm font-medium">Auto analyze on Run</div>
+            <div class="text-xs text-slate-400">Refreshes summary and page module automatically.</div>
+          </div>
+          <input id="autoAnalyzeToggle" type="checkbox" class="h-5 w-5 accent-blue-500">
+        </label>
 
-      if(text && text.length > 50){
-        $("mode").innerText="proxy";
-        return text;
-      }
+        <button id="saveSettingsBtn" class="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500">
+          Save settings
+        </button>
 
-    }catch{}
-  }
+        <div class="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300">
+          <div class="font-medium text-slate-100">Reality check</div>
+          <p class="mt-2 text-slate-400">
+            Full cross-origin inspection is blocked by browsers unless you use a proxy. This UI handles that cleanly instead of lying with fake zeroes.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  throw new Error("All proxies failed");
-}
+  <script>
+    const state = {
+      activeTab: "overview",
+      busy: false,
+      baseUrl: "",
+      currentPageUrl: "",
+      fetchMode: "direct",
+      theme: "dark",
+      density: "comfortable",
+      useProxy: false,
+      proxyUrl: "",
+      pagespeedKey: "",
+      autoAnalyze: true,
+      robotsText: "",
+      robotsError: "",
+      sitemapRaw: "",
+      sitemapError: "",
+      sitemapUrls: [],
+      sitemapSources: [],
+      selectedSitemapUrl: "",
+      pageHtml: "",
+      pageError: "",
+      pageInfo: null,
+      score: {
+        overall: 0,
+        technical: 0,
+        content: 0,
+        accessibility: 0,
+        social: 0,
+        crawlability: 0,
+        performance: 0
+      },
+      issues: [],
+      quickLinks: [],
+      pagePreviewMode: "srcdoc"
+    };
 
-// ===== PARSE
-function parseHTML(html){
-  const d=new DOMParser().parseFromString(html,"text/html");
-  return {
-    title:d.title,
-    desc:d.querySelector("meta[name=description]")?.content || ""
-  };
-}
+    const els = {
+      urlInput: document.getElementById("urlInput"),
+      runBtn: document.getElementById("runBtn"),
+      status: document.getElementById("status"),
+      fetchModeBadge: document.getElementById("fetchModeBadge"),
+      root: document.getElementById("root"),
+      summaryPanel: document.getElementById("summaryPanel"),
+      issuePanel: document.getElementById("issuePanel"),
+      quickPanel: document.getElementById("quickPanel"),
+      content: document.getElementById("content"),
+      settingsDrawer: document.getElementById("settingsDrawer"),
+      openSettingsBtn: document.getElementById("openSettingsBtn"),
+      closeSettingsBtn: document.getElementById("closeSettingsBtn"),
+      settingsOverlay: document.getElementById("settingsOverlay"),
+      themeSelect: document.getElementById("themeSelect"),
+      densitySelect: document.getElementById("densitySelect"),
+      useProxyToggle: document.getElementById("useProxyToggle"),
+      proxyUrlInput: document.getElementById("proxyUrlInput"),
+      pagespeedKeyInput: document.getElementById("pagespeedKeyInput"),
+      autoAnalyzeToggle: document.getElementById("autoAnalyzeToggle"),
+      saveSettingsBtn: document.getElementById("saveSettingsBtn")
+    };
 
-function parseXML(xml){
-  const doc=new DOMParser().parseFromString(xml,"text/xml");
-  if(doc.querySelector("parsererror")) throw "Bad XML";
-  return [...doc.getElementsByTagName("loc")].map(n=>n.textContent);
-}
-
-// ===== SITEMAP
-async function getSitemap(base){
-
-  let robots="";
-  let links=[];
-
-  try{
-    robots = await fetchSafe(base+"/robots.txt");
-    state.robots = robots;
-
-    links = [...robots.matchAll(/Sitemap:\s*(.+)/gi)]
-      .map(m=>m[1].trim());
-
-  }catch{}
-
-  for(const link of links){
-    try{
-      const xml = await fetchSafe(link);
-      const urls = parseXML(xml);
-      if(urls.length) return urls;
-    }catch{}
-  }
-
-  // fallback
-  try{
-    const xml = await fetchSafe(base+"/sitemap.xml");
-    return parseXML(xml);
-  }catch{}
-
-  return [];
-}
-
-// ===== RUN
-$("run").onclick = async ()=>{
-
-  try{
-    const input = $("url").value.trim();
-    if(!input) return toast("Enter URL");
-
-    const url = normalize(input);
-    state.url = url;
-
-    $("status").innerText="Loading...";
-    $("content").innerHTML="Loading...";
-
-    // PAGE
-    const html = await fetchSafe(url);
-    state.page = parseHTML(html);
-
-    // SITEMAP
-    state.sitemap = await getSitemap(url);
-
-    if(!state.sitemap.length){
-      toast("Sitemap not reachable (proxy blocked)");
-    }else{
-      toast("Sitemap loaded");
+    function escapeHtml(input = "") {
+      return String(input)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
     }
 
-    render();
-    $("status").innerText="Done";
+    function normalizeUrl(raw) {
+      const trimmed = String(raw || "").trim();
+      if (!trimmed) return "";
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      return "https://" + trimmed;
+    }
 
-  }catch(e){
-    $("status").innerText="Error";
-    $("content").innerHTML="Failed to load";
-    toast(e.message);
-  }
-};
+    function originOf(url) {
+      try {
+        return new URL(url).origin;
+      } catch {
+        return "";
+      }
+    }
 
-// ===== UI
-function render(){
+    function sameHost(urlA, urlB) {
+      try {
+        return new URL(urlA).host === new URL(urlB).host;
+      } catch {
+        return false;
+      }
+    }
 
-  $("summary").innerHTML=`
-    <div>Title: ${state.page?.title}</div>
-    <div>Sitemap URLs: ${state.sitemap.length}</div>
-  `;
+    function makeProxyUrl(targetUrl) {
+      if (!state.proxyUrl) return targetUrl;
+      if (state.proxyUrl.includes("{{url}}")) {
+        return state.proxyUrl.replaceAll("{{url}}", encodeURIComponent(targetUrl));
+      }
+      return state.proxyUrl + encodeURIComponent(targetUrl);
+    }
 
-  if(state.tab==="overview"){
-    $("content").innerHTML=`
-      <div>${state.page?.title}</div>
-      <div>${state.page?.desc}</div>
-    `;
-  }
+    async function fetchText(targetUrl, { timeout = 10000, allowProxyFallback = true } = {}) {
+      const attempts = [];
+      if (state.useProxy && state.proxyUrl) {
+        attempts.push({ mode: "proxy", url: makeProxyUrl(targetUrl) });
+      }
+      attempts.push({ mode: "direct", url: targetUrl });
 
-  if(state.tab==="sitemap"){
-    $("content").innerHTML = state.sitemap.length
-      ? state.sitemap.slice(0,50).join("<br>")
-      : "No sitemap";
-  }
+      let lastError = null;
 
-  if(state.tab==="robots"){
-    $("content").innerText = state.robots;
-  }
-}
+      for (const attempt of attempts) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+        try {
+          const res = await fetch(attempt.url, { signal: controller.signal });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          const text = await res.text();
+          return {
+            ok: true,
+            text,
+            mode: attempt.mode,
+            url: attempt.url,
+            status: res.status,
+            headers: res.headers
+          };
+        } catch (err) {
+          clearTimeout(timer);
+          lastError = err;
+          if (!allowProxyFallback) break;
+        }
+      }
 
-// ===== TABS
-document.querySelectorAll(".tab").forEach(btn=>{
-  btn.onclick = ()=>{
-    state.tab = btn.dataset.tab;
-    render();
-  };
-});
+      throw lastError || new Error("Fetch failed");
+    }
 
-</script>
+    function parseRobots(text) {
+      const lines = String(text || "").split(/\r?\n/);
+      const sitemaps = [];
+      const directives = {
+        userAgents: [],
+        disallow: [],
+        allow: [],
+        crawlDelay: [],
+        sitemap: []
+      };
 
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+
+        const sitemapMatch = trimmed.match(/^sitemap:\s*(.+)$/i);
+        const uaMatch = trimmed.match(/^user-agent:\s*(.+)$/i);
+        const disallowMatch = trimmed.match(/^disallow:\s*(.*)$/i);
+        const allowMatch = trimmed.match(/^allow:\s*(.*)$/i);
+        const crawlDelayMatch = trimmed.match(/^crawl-delay:\s*(.+)$/i);
+
+        if (sitemapMatch) {
+          directives.sitemap.push(sitemapMatch[1].trim());
+          sitemaps.push(sitemapMatch[1].trim());
+        }
+        if (uaMatch) directives.userAgents.push(uaMatch[1].trim());
+        if (disallowMatch) directives.disallow.push(disallowMatch[1].trim());
+        if (allowMatch) directives.allow.push(allowMatch[1].trim());
+        if (crawlDelayMatch) directives.crawlDelay.push(crawlDelayMatch[1].trim());
+      }
+
+      return { sitemaps, directives };
+    }
+
+    function parseSitemapXml(xmlText) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlText, "application/xml");
+      const parserError = doc.querySelector("parsererror");
+      if (parserError) {
+        return { type: "invalid", urls: [], childSitemaps: [], rawType: "invalid" };
+      }
+
+      const hasUrlset = doc.getElementsByTagName("urlset").length > 0;
+      const hasSitemapIndex = doc.getElementsByTagName("sitemapindex").length > 0;
+
+      const urls = [...doc.getElementsByTagName("loc")].map(n => (n.textContent || "").trim()).filter(Boolean);
+      if (hasSitemapIndex) {
+        return { type: "index", urls: [], childSitemaps: urls, rawType: "sitemapindex" };
+      }
+      if (hasUrlset) {
+        return { type: "urlset", urls, childSitemaps: [], rawType: "urlset" };
+      }
+      return { type: "unknown", urls, childSitemaps: [], rawType: "unknown" };
+    }
+
+    async function collectSitemapUrls(baseUrl, robotsText) {
+      const discovered = [];
+      const childSitemaps = new Set();
+      const visited = new Set();
+      const candidateRoots = [];
+
+      const robots = parseRobots(robotsText);
+      for (const sm of robots.sitemaps) candidateRoots.push(sm);
+
+      const common = [
+        new URL("/sitemap.xml", baseUrl).href,
+        new URL("/sitemap_index.xml", baseUrl).href
+      ];
+      for (const c of common) candidateRoots.push(c);
+
+      const uniqueRoots = [...new Set(candidateRoots.filter(Boolean))];
+
+      async function walkSitemap(url, depth = 0) {
+        if (!url || visited.has(url) || depth > 4) return;
+        visited.add(url);
+
+        try {
+          const res = await fetchText(url, { timeout: 12000 });
+          const parsed = parseSitemapXml(res.text);
+
+          if (parsed.type === "index") {
+            for (const child of parsed.childSitemaps.slice(0, 50)) {
+              childSitemaps.add(child);
+              await walkSitemap(child, depth + 1);
+            }
+          } else if (parsed.type === "urlset" || parsed.type === "unknown") {
+            for (const u of parsed.urls) {
+              if (discovered.length >= 500) break;
+              discovered.push(u);
+            }
+          }
+        } catch {
+          return;
+        }
+      }
+
+      for (const root of uniqueRoots) {
+        if (discovered.length >= 500) break;
+        await walkSitemap(root, 0);
+      }
+
+      return {
+        urls: [...new Set(discovered)],
+        childSitemaps: [...childSitemaps],
+        roots: uniqueRoots
+      };
+    }
+
+    function parseHtml(html, pageUrl) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      const title = (doc.title || "").trim();
+      const description = (doc.querySelector('meta[name="description"]')?.getAttribute("content") || "").trim();
+      const keywords = (doc.querySelector('meta[name="keywords"]')?.getAttribute("content") || "").trim();
+      const canonical = (doc.querySelector('link[rel="canonical"]')?.getAttribute("href") || "").trim();
+      const robotsMeta = (doc.querySelector('meta[name="robots"]')?.getAttribute("content") || "").trim();
+      const viewport = (doc.querySelector('meta[name="viewport"]')?.getAttribute("content") || "").trim();
+      const charset = (doc.querySelector("meta[charset]")?.getAttribute("charset") || "").trim();
+      const lang = (doc.documentElement.getAttribute("lang") || "").trim();
+
+      const og = {
+        title: (doc.querySelector('meta[property="og:title"]')?.getAttribute("content") || "").trim(),
+        description: (doc.querySelector('meta[property="og:description"]')?.getAttribute("content") || "").trim(),
+        image: (doc.querySelector('meta[property="og:image"]')?.getAttribute("content") || "").trim(),
+        url: (doc.querySelector('meta[property="og:url"]')?.getAttribute("content") || "").trim(),
+        type: (doc.querySelector('meta[property="og:type"]')?.getAttribute("content") || "").trim()
+      };
+
+      const twitter = {
+        card: (doc.querySelector('meta[name="twitter:card"]')?.getAttribute("content") || "").trim(),
+        title: (doc.querySelector('meta[name="twitter:title"]')?.getAttribute("content") || "").trim(),
+        description: (doc.querySelector('meta[name="twitter:description"]')?.getAttribute("content") || "").trim(),
+        image: (doc.querySelector('meta[name="twitter:image"]')?.getAttribute("content") || "").trim()
+      };
+
+      const imgs = [...doc.querySelectorAll("img")];
+      const links = [...doc.querySelectorAll("a[href]")];
+      const headings = [...doc.querySelectorAll("h1,h2,h3,h4,h5,h6")].map(el => ({
+        tag: el.tagName.toLowerCase(),
+        text: (el.textContent || "").trim().replace(/\s+/g, " ")
+      }));
+
+      const forms = [...doc.querySelectorAll("form")];
+      const buttons = [...doc.querySelectorAll("button")];
+      const scripts = [...doc.querySelectorAll("script")];
+      const stylesheets = [...doc.querySelectorAll('link[rel="stylesheet"]')];
+      const preloads = [...doc.querySelectorAll('link[rel="preload"]')];
+      const hreflang = [...doc.querySelectorAll('link[rel="alternate"][hreflang]')];
+
+      const jsonLdScripts = [...doc.querySelectorAll('script[type="application/ld+json"]')];
+      const jsonLd = [];
+      const jsonLdErrors = [];
+      for (const s of jsonLdScripts) {
+        const raw = (s.textContent || "").trim();
+        if (!raw) continue;
+        try {
+          const parsed = JSON.parse(raw);
+          jsonLd.push(parsed);
+        } catch (e) {
+          jsonLdErrors.push("Invalid JSON-LD block");
+        }
+      }
+
+      const altMissing = imgs.filter(img => !img.hasAttribute("alt") || !img.getAttribute("alt")?.trim()).length;
+      const lazyImages = imgs.filter(img => /lazy/i.test(img.getAttribute("loading") || "")).length;
+      const dimsImages = imgs.filter(img => img.hasAttribute("width") || img.hasAttribute("height")).length;
+
+      const allHref = links.map(a => a.getAttribute("href") || "").filter(Boolean);
+      const filteredLinks = allHref.filter(h => !/^(mailto:|tel:|javascript:|#)/i.test(h));
+      const internalLinks = [];
+      const externalLinks = [];
+      const nofollowLinks = [];
+
+      for (const href of filteredLinks) {
+        try {
+          const abs = new URL(href, pageUrl).href;
+          if (sameHost(abs, pageUrl)) internalLinks.push(abs);
+          else externalLinks.push(abs);
+        } catch {}
+      }
+
+      for (const a of links) {
+        const rel = (a.getAttribute("rel") || "").toLowerCase();
+        if (rel.includes("nofollow")) nofollowLinks.push(a);
+      }
+
+      const text = (doc.body?.innerText || "").replace(/\s+/g, " ").trim();
+      const wordCount = text ? text.split(/\s+/).filter(Boolean).length : 0;
+      const htmlLength = html.length;
+      const textRatio = htmlLength > 0 ? Math.round((text.length / htmlLength) * 100) : 0;
+
+      const noindex = /noindex/i.test(robotsMeta) || /noindex/i.test(html);
+      const nocache = /noarchive/i.test(robotsMeta);
+      const nosnippet = /nosnippet/i.test(robotsMeta);
+      const noimageindex = /noimageindex/i.test(robotsMeta);
+      const notranslate = /notranslate/i.test(robotsMeta);
+      const maxsnippet = /max-snippet:\s*\d+/i.test(robotsMeta);
+      const maximage = /max-image-preview:\s*\w+/i.test(robotsMeta);
+      const maxvideo = /max-video-preview:\s*\d+/i.test(robotsMeta);
+
+      const favicon = doc.querySelector('link[rel*="icon"]')?.getAttribute("href") || "";
+
+      return {
+        url: pageUrl,
+        title,
+        description,
+        keywords,
+        canonical,
+        robotsMeta,
+        viewport,
+        charset,
+        lang,
+        og,
+        twitter,
+        headings,
+        imgs: imgs.map(img => ({
+          src: img.getAttribute("src") || "",
+          alt: img.getAttribute("alt") || "",
+          loading: img.getAttribute("loading") || "",
+          width: img.getAttribute("width") || "",
+          height: img.getAttribute("height") || ""
+        })),
+        links: filteredLinks,
+        internalLinks,
+        externalLinks,
+        nofollowLinks: nofollowLinks.length,
+        forms: forms.length,
+        buttons: buttons.length,
+        scripts: scripts.length,
+        stylesheets: stylesheets.length,
+        preloads: preloads.length,
+        hreflang: hreflang.length,
+        jsonLd,
+        jsonLdErrors,
+        altMissing,
+        lazyImages,
+        dimsImages,
+        wordCount,
+        htmlLength,
+        textRatio,
+        noindex,
+        nocache,
+        nosnippet,
+        noimageindex,
+        notranslate,
+        maxsnippet,
+        maximage,
+        maxvideo,
+        favicon,
+        doc
+      };
+    }
+
+    function computeScores(pageInfo, sitemapCount, robotsInfo, performanceInfo) {
+      const titleLen = pageInfo.title.length;
+      const descLen = pageInfo.description.length;
+      const h1Count = pageInfo.headings.filter(h => h.tag === "h1").length;
+      const og = pageInfo.og;
+      const twitter = pageInfo.twitter;
+
+      const titleScore = pageInfo.title ? (titleLen >= 30 && titleLen <= 60 ? 100 : 70) : 0;
+      const descriptionScore = pageInfo.description ? (descLen >= 70 && descLen <= 160 ? 100 : 70) : 0;
+      const headingScore = h1Count === 1 ? 100 : h1Count === 0 ? 35 : 55;
+      const imageScore = pageInfo.imgs.length === 0 ? 100 : Math.max(0, Math.round(100 - (pageInfo.altMissing / pageInfo.imgs.length) * 100));
+      const socialScore = Math.round([
+        og.title, og.description, og.image, twitter.card, twitter.title, twitter.description, twitter.image
+      ].filter(Boolean).length / 7 * 100);
+      const crawlScore = Math.round(
+        (pageInfo.canonical ? 20 : 0) +
+        (pageInfo.viewport ? 10 : 0) +
+        (pageInfo.charset ? 10 : 0) +
+        (pageInfo.lang ? 10 : 0) +
+        (pageInfo.noindex ? 0 : 20) +
+        (sitemapCount > 0 ? 20 : 0) +
+        (robotsInfo ? 10 : 0)
+      );
+
+      const accessibilityScore = Math.round(
+        (pageInfo.lang ? 20 : 0) +
+        (pageInfo.viewport ? 20 : 0) +
+        (pageInfo.altMissing === 0 ? 25 : Math.max(0, 25 - Math.round((pageInfo.altMissing / Math.max(pageInfo.imgs.length, 1)) * 25))) +
+        (h1Count === 1 ? 15 : 5) +
+        (pageInfo.headings.length > 0 ? 20 : 0)
+      );
+
+      const contentScore = Math.round(
+        (pageInfo.wordCount > 250 ? 25 : 15) +
+        (pageInfo.title ? 20 : 0) +
+        (pageInfo.description ? 20 : 0) +
+        (pageInfo.headings.length > 2 ? 15 : 8) +
+        (pageInfo.internalLinks.length > 0 ? 20 : 0)
+      );
+
+      const technicalScore = Math.round(
+        (pageInfo.charset ? 15 : 0) +
+        (pageInfo.canonical ? 15 : 0) +
+        (pageInfo.viewport ? 15 : 0) +
+        (!pageInfo.noindex ? 20 : 0) +
+        (pageInfo.jsonLd.length > 0 ? 15 : 0) +
+        (pageInfo.stylesheets >= 0 ? 10 : 0) +
+        (pageInfo.scripts >= 0 ? 10 : 0)
+      );
+
+      const performanceScore = performanceInfo?.score ?? heuristicPerformance(pageInfo);
+
+      const overall = Math.round(
+        technicalScore * 0.20 +
+        contentScore * 0.20 +
+        accessibilityScore * 0.15 +
+        socialScore * 0.10 +
+        crawlScore * 0.15 +
+        performanceScore * 0.20
+      );
+
+      return {
+        titleScore,
+        descriptionScore,
+        headingScore,
+        imageScore,
+        socialScore,
+        crawlScore,
+        accessibilityScore,
+        contentScore,
+        technicalScore,
+        performanceScore,
+        overall
+      };
+    }
+
+    function heuristicPerformance(pageInfo) {
+      const scriptPenalty = Math.min(pageInfo.scripts * 2.5, 30);
+      const stylePenalty = Math.min(pageInfo.stylesheets * 1.5, 15);
+      const imgPenalty = Math.min(pageInfo.imgs.length * 0.7, 20);
+      const lazyBonus = Math.min(pageInfo.lazyImages * 1.5, 10);
+      const preloadBonus = Math.min(pageInfo.preloads * 2, 10);
+      const fontBonus = /font/i.test(pageInfo.htmlLength) ? 2 : 0;
+      const score = Math.round(100 - scriptPenalty - stylePenalty - imgPenalty + lazyBonus + preloadBonus + fontBonus);
+      return Math.max(0, Math.min(100, score));
+    }
+
+    function getIssues(pageInfo, sitemapCount, robotsInfo, scores, sitemapError) {
+      const issues = [];
+
+      if (!sitemapCount && !sitemapError) issues.push({ tone: "warn", text: "No sitemap URLs found." });
+      if (sitemapError) issues.push({ tone: "bad", text: "Sitemap error: " + sitemapError });
+      if (!robotsInfo) issues.push({ tone: "warn", text: "robots.txt not accessible." });
+      if (pageInfo.noindex) issues.push({ tone: "bad", text: "Page contains noindex. It is not eligible for indexing." });
+      if (!pageInfo.title) issues.push({ tone: "bad", text: "Missing title tag." });
+      if (!pageInfo.description) issues.push({ tone: "warn", text: "Missing meta description." });
+      if (pageInfo.title && (pageInfo.title.length < 30 || pageInfo.title.length > 60)) issues.push({ tone: "warn", text: "Title length is outside the usual range." });
+      if (pageInfo.description && (pageInfo.description.length < 70 || pageInfo.description.length > 160)) issues.push({ tone: "warn", text: "Description length is outside the usual range." });
+      const h1Count = pageInfo.headings.filter(h => h.tag === "h1").length;
+      if (h1Count !== 1) issues.push({ tone: "warn", text: "H1 count is not exactly 1." });
+      if (pageInfo.imgs.length > 0 && pageInfo.altMissing > 0) issues.push({ tone: "warn", text: `${pageInfo.altMissing} image(s) missing alt text.` });
+      if (!pageInfo.canonical) issues.push({ tone: "warn", text: "Missing canonical link." });
+      if (!pageInfo.viewport) issues.push({ tone: "warn", text: "Missing viewport meta." });
+      if (!pageInfo.lang) issues.push({ tone: "warn", text: "Missing html lang attribute." });
+      if (!pageInfo.og.title || !pageInfo.og.description || !pageInfo.og.image) issues.push({ tone: "warn", text: "Open Graph metadata is incomplete." });
+      if (!pageInfo.twitter.card) issues.push({ tone: "warn", text: "Twitter card metadata missing." });
+      if (!pageInfo.jsonLd.length) issues.push({ tone: "warn", text: "No JSON-LD structured data found." });
+      if (scores.performance < 60) issues.push({ tone: "warn", text: "Performance score is weak." });
+
+      if (!issues.length) {
+        issues.push({ tone: "good", text: "No obvious SEO blockers detected." });
+      }
+
+      return issues.slice(0, 8);
+    }
+
+    function scoreTone(score) {
+      if (score >= 85) return "good";
+      if (score >= 65) return "warn";
+      return "bad";
+    }
+
+    function toneClass(tone) {
+      if (tone === "good") return "border-emerald-500/40 bg-emerald-500/10 text-emerald-200";
+      if (tone === "warn") return "border-amber-500/40 bg-amber-500/10 text-amber-200";
+      return "border-rose-500/40 bg-rose-500/10 text-rose-200";
+    }
+
+    function scoreCard(label, score, detail = "") {
+      const deg = Math.max(0, Math.min(100, score)) * 3.6;
+      const tone = scoreTone(score);
+      const color = tone === "good" ? "#22c55e" : tone === "warn" ? "#f59e0b" : "#ef4444";
+      return `
+        <div class="flex items-center gap-3 rounded-2xl border border-slate-800 bg-[#0b1322] p-3">
+          <div class="ring-gauge relative h-14 w-14 shrink-0 rounded-full" style="--gauge-deg:${deg}deg;--gauge-color:${color}">
+            <div class="absolute inset-[6px] flex items-center justify-center rounded-full bg-[#0b1322] text-xs font-semibold">${score}</div>
+          </div>
+          <div class="min-w-0">
+            <div class="text-xs uppercase tracking-wide text-slate-500">${label}</div>
+            <div class="text-sm font-medium text-slate-100">${detail || "Score"}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function statCard(label, value, accent = "slate") {
+      const borderMap = {
+        green: "border-emerald-500/40",
+        red: "border-rose-500/40",
+        amber: "border-amber-500/40",
+        blue: "border-blue-500/40",
+        slate: "border-slate-800"
+      };
+      return `
+        <div class="rounded-2xl border ${borderMap[accent] || borderMap.slate} bg-[#0b1322] p-4">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500">${label}</div>
+          <div class="mt-1 break-words text-lg font-semibold text-slate-100">${value}</div>
+        </div>
+      `;
+    }
+
+    function block(title, body) {
+      return `
+        <section class="rounded-2xl border border-slate-800 bg-[#0a1322] p-4 md:p-5">
+          <div class="mb-3 flex items-center justify-between gap-2">
+            <h2 class="text-base font-semibold md:text-lg">${title}</h2>
+          </div>
+          ${body}
+        </section>
+      `;
+    }
+
+    function listItems(items) {
+      return items.map(item => `<div class="rounded-xl border ${toneClass(item.tone)} px-3 py-2 text-sm">${escapeHtml(item.text)}</div>`).join("");
+    }
+
+    function tabsMarkup(active) {
+      document.querySelectorAll(".tabBtn").forEach(btn => {
+        btn.classList.toggle("tab-active", btn.dataset.tab === active);
+      });
+    }
+
+    function renderSkeleton() {
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div class="skeleton h-24 rounded-2xl"></div>
+            <div class="skeleton h-24 rounded-2xl"></div>
+            <div class="skeleton h-24 rounded-2xl"></div>
+            <div class="skeleton h-24 rounded-2xl"></div>
+          </div>
+          <div class="skeleton h-96 rounded-2xl"></div>
+        </div>
+      `;
+      els.summaryPanel.innerHTML = `<div class="skeleton h-64 rounded-2xl"></div>`;
+      els.issuePanel.innerHTML = `<div class="skeleton h-40 rounded-2xl"></div>`;
+      els.quickPanel.innerHTML = `<div class="skeleton h-32 rounded-2xl"></div>`;
+    }
+
+    function renderSummary() {
+      const s = state.score;
+      els.summaryPanel.innerHTML = `
+        <div class="space-y-4">
+          ${scoreCard("Overall", s.overall, "global SEO rating")}
+          <div class="grid grid-cols-2 gap-3">
+            ${statCard("Technical", s.technical, s.technical >= 85 ? "green" : s.technical >= 65 ? "amber" : "red")}
+            ${statCard("Content", s.content, s.content >= 85 ? "green" : s.content >= 65 ? "amber" : "red")}
+            ${statCard("Accessibility", s.accessibility, s.accessibility >= 85 ? "green" : s.accessibility >= 65 ? "amber" : "red")}
+            ${statCard("Crawlability", s.crawlability, s.crawlability >= 85 ? "green" : s.crawlability >= 65 ? "amber" : "red")}
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            ${statCard("Social", s.social, s.social >= 85 ? "green" : s.social >= 65 ? "amber" : "red")}
+            ${statCard("Performance", s.performance, s.performance >= 85 ? "green" : s.performance >= 65 ? "amber" : "red")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderIssues() {
+      els.issuePanel.innerHTML = `
+        <div class="space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-400">Key issues</h3>
+            <span class="text-xs text-slate-500">${state.issues.length} checks</span>
+          </div>
+          <div class="space-y-2">${listItems(state.issues)}</div>
+        </div>
+      `;
+    }
+
+    function renderQuick() {
+      const sitemapCount = state.sitemapUrls.length;
+      const pageCountLabel = sitemapCount ? String(sitemapCount) : "0";
+      els.quickPanel.innerHTML = `
+        <div class="space-y-3">
+          <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-400">Quick facts</h3>
+          <div class="grid grid-cols-2 gap-3">
+            ${statCard("Sitemap URLs", pageCountLabel, sitemapCount ? "green" : "red")}
+            ${statCard("H1 count", state.pageInfo ? String(state.pageInfo.headings.filter(h => h.tag === "h1").length) : "—", "slate")}
+            ${statCard("Images", state.pageInfo ? String(state.pageInfo.imgs.length) : "—", "slate")}
+            ${statCard("Internal links", state.pageInfo ? String(state.pageInfo.internalLinks.length) : "—", "slate")}
+          </div>
+          <button id="copySitemapBtn" class="w-full rounded-xl border border-slate-700 px-4 py-3 text-sm font-medium hover:bg-slate-800">
+            Copy sitemap URLs
+          </button>
+        </div>
+      `;
+      const btn = document.getElementById("copySitemapBtn");
+      if (btn) {
+        btn.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(state.sitemapUrls.join("\n"));
+            setStatus("Sitemap URLs copied");
+          } catch {
+            setStatus("Clipboard blocked");
+          }
+        };
+      }
+    }
+
+    function renderOverview() {
+      const page = state.pageInfo;
+      const robots = state.robotsText;
+      const s = state.score;
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("Base URL", state.baseUrl || "—", "blue")}
+            ${statCard("Fetch mode", state.fetchMode || "direct", state.fetchMode === "proxy" ? "amber" : "green")}
+            ${statCard("Sitemap URLs", String(state.sitemapUrls.length), state.sitemapUrls.length ? "green" : "red")}
+            ${statCard("Robots", state.robotsText ? "Found" : "Missing", state.robotsText ? "green" : "red")}
+          </div>
+
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            ${statCard("Title", page?.title ? `${page.title} (${page.title.length})` : "Missing", page?.title ? "green" : "red")}
+            ${statCard("Description", page?.description ? `${page.description} (${page.description.length})` : "Missing", page?.description ? "green" : "red")}
+            ${statCard("Canonical", page?.canonical || "Missing", page?.canonical ? "green" : "red")}
+            ${statCard("Viewport", page?.viewport || "Missing", page?.viewport ? "green" : "red")}
+            ${statCard("Lang", page?.lang || "Missing", page?.lang ? "green" : "red")}
+            ${statCard("JSON-LD blocks", page ? String(page.jsonLd.length) : "—", page && page.jsonLd.length ? "green" : "amber")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Head metadata", page ? renderMetaTable(page) : `<div class="text-sm text-slate-500">Run analysis first.</div>`)}
+            ${block("Crawlability", page ? renderCrawlability(page, robots) : `<div class="text-sm text-slate-500">Run analysis first.</div>`)}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Rendered preview", renderPreviewBox())}
+            ${block("Source preview", renderSourcePreview())}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMetaTable(page) {
+      return `
+        <div class="grid gap-3 md:grid-cols-2">
+          ${miniKV("Title", page.title || "Missing")}
+          ${miniKV("Description", page.description || "Missing")}
+          ${miniKV("Keywords", page.keywords || "Missing")}
+          ${miniKV("Canonical", page.canonical || "Missing")}
+          ${miniKV("Robots meta", page.robotsMeta || "Missing")}
+          ${miniKV("Charset", page.charset || "Missing")}
+          ${miniKV("Viewport", page.viewport || "Missing")}
+          ${miniKV("Language", page.lang || "Missing")}
+          ${miniKV("Favicon", page.favicon || "Missing")}
+          ${miniKV("Hreflang links", String(page.hreflang))}
+        </div>
+      `;
+    }
+
+    function renderCrawlability(page, robotsText) {
+      const robotsInfo = parseRobots(robotsText || "");
+      return `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2">
+            ${miniKV("Noindex", page.noindex ? "Yes" : "No")}
+            ${miniKV("Canonical present", page.canonical ? "Yes" : "No")}
+            ${miniKV("Sitemaps in robots", String(robotsInfo.sitemaps.length))}
+            ${miniKV("Noarchive", page.nocache ? "Yes" : "No")}
+            ${miniKV("Nosnippet", page.nosnippet ? "Yes" : "No")}
+            ${miniKV("Noimageindex", page.noimageindex ? "Yes" : "No")}
+          </div>
+          <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">
+            <div class="text-xs uppercase tracking-wide text-slate-500">Robots summary</div>
+            <div class="mt-2 text-sm text-slate-300">
+              User-agents: ${robotsInfo.directives.userAgents.length || 0}<br>
+              Disallow rules: ${robotsInfo.directives.disallow.length || 0}<br>
+              Allow rules: ${robotsInfo.directives.allow.length || 0}<br>
+              Sitemap refs: ${robotsInfo.sitemaps.length || 0}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function miniKV(k, v) {
+      return `
+        <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">
+          <div class="text-[11px] uppercase tracking-wide text-slate-500">${k}</div>
+          <div class="mt-1 break-words text-sm font-medium text-slate-100">${escapeHtml(v)}</div>
+        </div>
+      `;
+    }
+
+    function renderPreviewBox() {
+      if (!state.pageHtml && !state.currentPageUrl) {
+        return `<div class="text-sm text-slate-500">Rendered preview appears after a successful page fetch.</div>`;
+      }
+
+      const baseHref = state.pageInfo?.url || state.currentPageUrl;
+      const srcdoc = state.pageHtml
+        ? injectBaseHref(state.pageHtml, baseHref)
+        : "";
+
+      return `
+        <div class="space-y-3">
+          <div class="rounded-xl border border-slate-800 bg-[#07111d] p-2">
+            <iframe
+              class="h-[420px] w-full rounded-lg bg-white"
+              src="${escapeHtml(state.currentPageUrl)}"
+              srcdoc="${escapeHtml(srcdoc)}"
+              sandbox="allow-forms allow-modals allow-popups allow-scripts"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            ></iframe>
+          </div>
+          <div class="text-xs text-slate-500">
+            If the iframe is blocked by the site, the preview may remain blank. Use a proxy if you need reliable rendering.
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSourcePreview() {
+      if (!state.pageHtml) {
+        return `<div class="text-sm text-slate-500">No source available.</div>`;
+      }
+      const preview = escapeHtml(state.pageHtml.slice(0, 8000));
+      return `
+        <div class="space-y-3">
+          <div class="max-h-[420px] overflow-auto rounded-xl border border-slate-800 bg-[#07111d] p-3 scrollbar">
+            <pre class="whitespace-pre-wrap break-words text-xs leading-5 text-slate-300">${preview}</pre>
+          </div>
+          <div class="text-xs text-slate-500">Showing first 8,000 characters.</div>
+        </div>
+      `;
+    }
+
+    function injectBaseHref(html, baseHref) {
+      const safeBase = escapeHtml(baseHref);
+      if (/<base\s/i.test(html)) return html;
+      if (/<head[^>]*>/i.test(html)) {
+        return html.replace(/<head([^>]*)>/i, `<head$1><base href="${safeBase}">`);
+      }
+      return `<base href="${safeBase}">` + html;
+    }
+
+    function renderRobotsTab() {
+      const txt = state.robotsText || "";
+      const parsed = parseRobots(txt);
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("User-agents", String(parsed.directives.userAgents.length), parsed.directives.userAgents.length ? "green" : "red")}
+            ${statCard("Disallow", String(parsed.directives.disallow.length), parsed.directives.disallow.length ? "amber" : "green")}
+            ${statCard("Allow", String(parsed.directives.allow.length), parsed.directives.allow.length ? "green" : "slate")}
+            ${statCard("Sitemaps", String(parsed.sitemaps.length), parsed.sitemaps.length ? "green" : "red")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Parsed rules", `
+              <div class="space-y-3 text-sm">
+                <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">User-agents: ${escapeHtml(parsed.directives.userAgents.join(", ") || "None")}</div>
+                <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">Disallow: ${escapeHtml(parsed.directives.disallow.join(" | ") || "None")}</div>
+                <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">Allow: ${escapeHtml(parsed.directives.allow.join(" | ") || "None")}</div>
+                <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">Crawl delay: ${escapeHtml(parsed.directives.crawlDelay.join(", ") || "None")}</div>
+                <div class="rounded-xl border border-slate-800 bg-[#07111d] p-3">Sitemap refs: ${escapeHtml(parsed.sitemaps.join("<br>") || "None")}</div>
+              </div>
+            `)}
+            ${block("Raw robots.txt", `
+              <div class="max-h-[520px] overflow-auto rounded-xl border border-slate-800 bg-[#07111d] p-3 scrollbar">
+                <pre class="whitespace-pre-wrap break-words text-xs leading-5 text-slate-300">${escapeHtml(txt || "Not available")}</pre>
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    function depthFromUrl(u) {
+      try {
+        const path = new URL(u).pathname.replace(/\/+/g, "/").replace(/^\//, "").replace(/\/$/, "");
+        if (!path) return 0;
+        return path.split("/").filter(Boolean).length;
+      } catch {
+        return 0;
+      }
+    }
+
+    function renderSitemapTab() {
+      const urls = state.sitemapUrls;
+      const child = state.sitemapSources;
+
+      const grouped = {};
+      for (const u of urls) {
+        const d = depthFromUrl(u);
+        grouped[d] = (grouped[d] || 0) + 1;
+      }
+
+      const topUrls = urls.slice(0, 50);
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("Total URLs", String(urls.length), urls.length ? "green" : "red")}
+            ${statCard("Sitemap sources", String(child.length), child.length ? "green" : "amber")}
+            ${statCard("Deepest path level", String(Math.max(0, ...urls.map(depthFromUrl))), "slate")}
+            ${statCard("Top sample", String(Math.min(urls.length, 50)), "blue")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Sitemap distribution", `
+              <div class="space-y-2 text-sm">
+                ${Object.keys(grouped).sort((a,b)=>Number(a)-Number(b)).map(k => `
+                  <div class="flex items-center justify-between rounded-xl border border-slate-800 bg-[#07111d] px-3 py-2">
+                    <span>Depth ${k}</span>
+                    <span class="font-semibold">${grouped[k]}</span>
+                  </div>
+                `).join("") || `<div class="text-slate-500">No URLs parsed.</div>`}
+              </div>
+            `)}
+
+            ${block("Analyzable URLs", `
+              <div class="scrollbar max-h-[520px] space-y-2 overflow-auto">
+                ${topUrls.map(u => `
+                  <button data-page-url="${escapeHtml(u)}"
+                    class="analyzePageBtn w-full rounded-xl border border-slate-800 bg-[#07111d] px-3 py-2 text-left text-xs text-slate-200 hover:border-blue-500 hover:bg-slate-900">
+                    <div class="line-clamp-2 break-all">${escapeHtml(u)}</div>
+                  </button>
+                `).join("") || `<div class="text-sm text-slate-500">No URLs discovered.</div>`}
+              </div>
+            `)}
+          </div>
+
+          <div class="rounded-2xl border border-slate-800 bg-[#07111d] p-3">
+            <div class="mb-2 text-xs uppercase tracking-wide text-slate-500">Child sitemaps</div>
+            <div class="scrollbar max-h-56 overflow-auto text-xs text-slate-300">
+              ${(child.length ? child : ["None"]).map(u => `<div class="break-all py-1">${escapeHtml(u)}</div>`).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+
+      bindAnalyzeButtons();
+    }
+
+    function renderPageTab() {
+      const p = state.pageInfo;
+      if (!p) {
+        els.content.innerHTML = `
+          <div class="rounded-2xl border border-slate-800 bg-[#07111d] p-4 text-sm text-slate-500">
+            No page data loaded. Run the inspector first or click a sitemap URL.
+          </div>
+        `;
+        return;
+      }
+
+      const h1Count = p.headings.filter(h => h.tag === "h1").length;
+      const h2Count = p.headings.filter(h => h.tag === "h2").length;
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("Word count", String(p.wordCount), p.wordCount >= 250 ? "green" : "amber")}
+            ${statCard("Text ratio", `${p.textRatio}%`, p.textRatio >= 20 ? "green" : "amber")}
+            ${statCard("H1 / H2", `${h1Count} / ${h2Count}`, h1Count === 1 ? "green" : "amber")}
+            ${statCard("Links", `${p.links.length}`, p.links.length ? "green" : "red")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Rendered preview", renderPreviewBox())}
+            ${block("Page source preview", renderSourcePreview())}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Headings", `
+              <div class="scrollbar max-h-72 space-y-2 overflow-auto">
+                ${p.headings.length ? p.headings.map((h, i) => `
+                  <div class="rounded-xl border border-slate-800 bg-[#07111d] px-3 py-2 text-sm">
+                    <span class="mr-2 rounded-md border border-slate-700 px-2 py-0.5 text-[11px] uppercase">${h.tag}</span>
+                    <span>${escapeHtml(h.text || "(empty)")}</span>
+                  </div>
+                `).join("") : `<div class="text-sm text-slate-500">No headings found.</div>`}
+              </div>
+            `)}
+
+            ${block("Links", `
+              <div class="grid gap-3 md:grid-cols-2">
+                ${miniKV("Internal links", String(p.internalLinks.length))}
+                ${miniKV("External links", String(p.externalLinks.length))}
+                ${miniKV("Nofollow links", String(p.nofollowLinks))}
+                ${miniKV("Forms", String(p.forms))}
+                ${miniKV("Buttons", String(p.buttons))}
+                ${miniKV("Stylesheets", String(p.stylesheets))}
+              </div>
+              <div class="mt-3 text-xs text-slate-500">Showing counts only, not broken-link validation.</div>
+            `)}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Images", `
+              <div class="grid gap-3 md:grid-cols-2">
+                ${miniKV("Total images", String(p.imgs.length))}
+                ${miniKV("Missing alt", String(p.altMissing))}
+                ${miniKV("Lazy loaded", String(p.lazyImages))}
+                ${miniKV("Has dimensions", String(p.dimsImages))}
+              </div>
+              <div class="mt-3 max-h-72 overflow-auto rounded-xl border border-slate-800 bg-[#07111d] p-3 scrollbar">
+                ${p.imgs.slice(0, 30).map((img, i) => `
+                  <div class="mb-2 rounded-lg border border-slate-800 bg-[#0a1322] p-2 text-xs">
+                    <div class="font-medium text-slate-100">Image ${i + 1}</div>
+                    <div class="break-all text-slate-400">${escapeHtml(img.src || "missing src")}</div>
+                    <div class="text-slate-500">alt: ${escapeHtml(img.alt || "missing")} | loading: ${escapeHtml(img.loading || "-")}</div>
+                  </div>
+                `).join("") || `<div class="text-sm text-slate-500">No images detected.</div>`}
+              </div>
+            `)}
+
+            ${block("Structured data", `
+              <div class="grid gap-3 md:grid-cols-2">
+                ${miniKV("JSON-LD blocks", String(p.jsonLd.length))}
+                ${miniKV("JSON-LD errors", String(p.jsonLdErrors.length))}
+                ${miniKV("Hreflang links", String(p.hreflang))}
+                ${miniKV("Favicon", p.favicon ? "Found" : "Missing")}
+              </div>
+              <div class="mt-3 max-h-72 overflow-auto rounded-xl border border-slate-800 bg-[#07111d] p-3 scrollbar">
+                ${p.jsonLd.length ? p.jsonLd.map((blockObj, i) => `
+                  <pre class="mb-3 whitespace-pre-wrap break-words rounded-lg border border-slate-800 bg-[#0a1322] p-3 text-[11px] leading-5 text-slate-300">${escapeHtml(JSON.stringify(blockObj, null, 2))}</pre>
+                `).join("") : `<div class="text-sm text-slate-500">No JSON-LD detected.</div>`}
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMetaTab() {
+      const p = state.pageInfo;
+      if (!p) {
+        els.content.innerHTML = `<div class="text-sm text-slate-500">No page loaded.</div>`;
+        return;
+      }
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("Title length", String(p.title.length), p.title.length >= 30 && p.title.length <= 60 ? "green" : "amber")}
+            ${statCard("Description length", String(p.description.length), p.description.length >= 70 && p.description.length <= 160 ? "green" : "amber")}
+            ${statCard("Canonical", p.canonical ? "Present" : "Missing", p.canonical ? "green" : "red")}
+            ${statCard("Robots meta", p.robotsMeta || "Missing", p.robotsMeta ? "green" : "red")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Meta preview", `
+              <div class="space-y-2 text-sm">
+                ${miniKV("Title", p.title || "Missing")}
+                ${miniKV("Description", p.description || "Missing")}
+                ${miniKV("Keywords", p.keywords || "Missing")}
+                ${miniKV("Canonical", p.canonical || "Missing")}
+                ${miniKV("Viewport", p.viewport || "Missing")}
+                ${miniKV("Charset", p.charset || "Missing")}
+                ${miniKV("Lang", p.lang || "Missing")}
+                ${miniKV("Robots", p.robotsMeta || "Missing")}
+                ${miniKV("Favicon", p.favicon || "Missing")}
+              </div>
+            `)}
+
+            ${block("Social metadata", `
+              <div class="space-y-2 text-sm">
+                ${miniKV("OG title", p.og.title || "Missing")}
+                ${miniKV("OG description", p.og.description || "Missing")}
+                ${miniKV("OG image", p.og.image || "Missing")}
+                ${miniKV("OG url", p.og.url || "Missing")}
+                ${miniKV("Twitter card", p.twitter.card || "Missing")}
+                ${miniKV("Twitter title", p.twitter.title || "Missing")}
+                ${miniKV("Twitter description", p.twitter.description || "Missing")}
+                ${miniKV("Twitter image", p.twitter.image || "Missing")}
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSocialTab() {
+      const p = state.pageInfo;
+      if (!p) {
+        els.content.innerHTML = `<div class="text-sm text-slate-500">No page loaded.</div>`;
+        return;
+      }
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("OG fields", countTruthy([p.og.title, p.og.description, p.og.image, p.og.url, p.og.type]), "green")}
+            ${statCard("Twitter fields", countTruthy([p.twitter.card, p.twitter.title, p.twitter.description, p.twitter.image]), "green")}
+            ${statCard("Social score", String(state.score.social), state.score.social >= 85 ? "green" : "amber")}
+            ${statCard("Share ready", (p.og.title || p.twitter.title) ? "Yes" : "No", (p.og.title || p.twitter.title) ? "green" : "red")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Open Graph / Twitter preview", `
+              <div class="rounded-2xl border border-slate-800 bg-[#07111d] p-4">
+                <div class="text-xs uppercase tracking-wide text-slate-500">Preview</div>
+                <div class="mt-3 overflow-hidden rounded-xl border border-slate-800 bg-[#0a1322]">
+                  <div class="aspect-[1.91/1] bg-slate-900">
+                    ${p.og.image ? `<img src="${escapeHtml(p.og.image)}" alt="" class="h-full w-full object-cover">` : `<div class="flex h-full items-center justify-center text-slate-500">No OG image</div>`}
+                  </div>
+                  <div class="space-y-1 p-4">
+                    <div class="text-xs text-slate-500">${escapeHtml(p.og.url || p.url)}</div>
+                    <div class="text-base font-semibold">${escapeHtml(p.og.title || p.title || "Missing title")}</div>
+                    <div class="line-clamp-2 text-sm text-slate-400">${escapeHtml(p.og.description || p.description || "Missing description")}</div>
+                  </div>
+                </div>
+              </div>
+            `)}
+
+            ${block("Share metadata", `
+              <div class="grid gap-3 md:grid-cols-2">
+                ${miniKV("OG title", p.og.title || "Missing")}
+                ${miniKV("OG description", p.og.description || "Missing")}
+                ${miniKV("OG image", p.og.image || "Missing")}
+                ${miniKV("OG type", p.og.type || "Missing")}
+                ${miniKV("Twitter card", p.twitter.card || "Missing")}
+                ${miniKV("Twitter title", p.twitter.title || "Missing")}
+                ${miniKV("Twitter desc", p.twitter.description || "Missing")}
+                ${miniKV("Twitter image", p.twitter.image || "Missing")}
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    function countTruthy(arr) {
+      return arr.filter(Boolean).length;
+    }
+
+    function renderAccessibilityTab() {
+      const p = state.pageInfo;
+      if (!p) {
+        els.content.innerHTML = `<div class="text-sm text-slate-500">No page loaded.</div>`;
+        return;
+      }
+
+      const h1Count = p.headings.filter(h => h.tag === "h1").length;
+      const missingAltRate = p.imgs.length ? Math.round((p.altMissing / p.imgs.length) * 100) : 0;
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("Lang attribute", p.lang || "Missing", p.lang ? "green" : "red")}
+            ${statCard("Viewport", p.viewport ? "Present" : "Missing", p.viewport ? "green" : "red")}
+            ${statCard("H1 count", String(h1Count), h1Count === 1 ? "green" : "amber")}
+            ${statCard("Alt missing rate", `${missingAltRate}%`, missingAltRate === 0 ? "green" : "amber")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Accessibility signals", `
+              <div class="grid gap-3 md:grid-cols-2">
+                ${miniKV("Headings count", String(p.headings.length))}
+                ${miniKV("Forms", String(p.forms))}
+                ${miniKV("Buttons", String(p.buttons))}
+                ${miniKV("Images", String(p.imgs.length))}
+                ${miniKV("Missing alt", String(p.altMissing))}
+                ${miniKV("Lazy images", String(p.lazyImages))}
+              </div>
+              <div class="mt-3 rounded-xl border border-slate-800 bg-[#07111d] p-3 text-sm text-slate-400">
+                Contrast cannot be reliably measured from raw HTML alone. A rendered-page accessibility scan needs a browser engine.
+              </div>
+            `)}
+
+            ${block("Heading outline", `
+              <div class="scrollbar max-h-[520px] space-y-2 overflow-auto">
+                ${p.headings.length ? p.headings.map((h, i) => `
+                  <div class="rounded-xl border border-slate-800 bg-[#07111d] px-3 py-2 text-sm">
+                    <span class="mr-2 rounded-md border border-slate-700 px-2 py-0.5 text-[11px] uppercase">${h.tag}</span>
+                    <span>${escapeHtml(h.text || "(empty)")}</span>
+                  </div>
+                `).join("") : `<div class="text-sm text-slate-500">No headings found.</div>`}
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSchemaTab() {
+      const p = state.pageInfo;
+      if (!p) {
+        els.content.innerHTML = `<div class="text-sm text-slate-500">No page loaded.</div>`;
+        return;
+      }
+
+      const types = extractJsonLdTypes(p.jsonLd);
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("JSON-LD blocks", String(p.jsonLd.length), p.jsonLd.length ? "green" : "red")}
+            ${statCard("Parsed types", String(types.length), types.length ? "green" : "amber")}
+            ${statCard("Parse errors", String(p.jsonLdErrors.length), p.jsonLdErrors.length ? "amber" : "green")}
+            ${statCard("Schema score", String(p.jsonLd.length ? Math.min(100, 50 + p.jsonLd.length * 15) : 0), p.jsonLd.length ? "green" : "red")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Detected schema types", `
+              <div class="space-y-2 text-sm">
+                ${types.length ? types.map(t => `<div class="rounded-xl border border-slate-800 bg-[#07111d] px-3 py-2">${escapeHtml(t)}</div>`).join("") : `<div class="text-slate-500">No structured data types detected.</div>`}
+              </div>
+            `)}
+
+            ${block("Raw JSON-LD", `
+              <div class="scrollbar max-h-[520px] overflow-auto space-y-3">
+                ${p.jsonLd.length ? p.jsonLd.map((obj, i) => `
+                  <pre class="rounded-xl border border-slate-800 bg-[#07111d] p-3 text-[11px] leading-5 text-slate-300">${escapeHtml(JSON.stringify(obj, null, 2))}</pre>
+                `).join("") : `<div class="text-sm text-slate-500">No JSON-LD blocks found.</div>`}
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+
+    function extractJsonLdTypes(jsonLdBlocks) {
+      const out = new Set();
+      for (const block of jsonLdBlocks) {
+        const items = Array.isArray(block) ? block : [block];
+        for (const item of items) {
+          if (item && typeof item === "object") {
+            if (item["@type"]) {
+              if (Array.isArray(item["@type"])) item["@type"].forEach(t => out.add(String(t)));
+              else out.add(String(item["@type"]));
+            }
+            if (item["@graph"] && Array.isArray(item["@graph"])) {
+              item["@graph"].forEach(n => {
+                if (n && n["@type"]) {
+                  if (Array.isArray(n["@type"])) n["@type"].forEach(t => out.add(String(t)));
+                  else out.add(String(n["@type"]));
+                }
+              });
+            }
+          }
+        }
+      }
+      return [...out];
+    }
+
+    function renderPerformanceTab() {
+      const p = state.pageInfo;
+      if (!p) {
+        els.content.innerHTML = `<div class="text-sm text-slate-500">No page loaded.</div>`;
+        return;
+      }
+
+      const heuristic = heuristicPerformance(p);
+      const psiKeySet = !!state.pagespeedKey;
+
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            ${statCard("Heuristic score", String(heuristic), heuristic >= 85 ? "green" : heuristic >= 65 ? "amber" : "red")}
+            ${statCard("Scripts", String(p.scripts), p.scripts <= 20 ? "green" : "amber")}
+            ${statCard("Stylesheets", String(p.stylesheets), p.stylesheets <= 8 ? "green" : "amber")}
+            ${statCard("Images", String(p.imgs.length), p.imgs.length <= 20 ? "green" : "amber")}
+          </div>
+
+          <div class="grid gap-3 xl:grid-cols-2">
+            ${block("Performance signals", `
+              <div class="grid gap-3 md:grid-cols-2">
+                ${miniKV("Lazy images", String(p.lazyImages))}
+                ${miniKV("Preloads", String(p.preloads))}
+                ${miniKV("Text ratio", `${p.textRatio}%`)}
+                ${miniKV("Word count", String(p.wordCount))}
+              </div>
+              <div class="mt-3 rounded-xl border border-slate-800 bg-[#07111d] p-3 text-sm text-slate-400">
+                This is a heuristic until you provide a PageSpeed API key in Settings. It is still useful for spotting obvious drag factors.
+              </div>
+            `)}
+
+            ${block("PageSpeed Insights", `
+              ${psiKeySet
+                ? `<button id="runPsiBtn" class="rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500">Run mobile PSI</button>
+                   <div id="psiOut" class="mt-3 rounded-xl border border-slate-800 bg-[#07111d] p-3 text-sm text-slate-300">Not run yet.</div>`
+                : `<div class="text-sm text-slate-500">Set a PageSpeed API key in Settings to enable real PSI scoring.</div>`
+              }
+            `)}
+          </div>
+        </div>
+      `;
+
+      const runPsiBtn = document.getElementById("runPsiBtn");
+      if (runPsiBtn) {
+        runPsiBtn.onclick = runPageSpeed;
+      }
+    }
+
+    async function runPageSpeed() {
+      const out = document.getElementById("psiOut");
+      if (!out) return;
+      out.textContent = "Running...";
+      try {
+        const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(state.currentPageUrl || state.baseUrl)}&strategy=mobile&key=${encodeURIComponent(state.pagespeedKey)}`;
+        const res = await fetch(api);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const score = Math.round((data?.lighthouseResult?.categories?.performance?.score || 0) * 100);
+        out.innerHTML = `
+          <div class="grid gap-3 md:grid-cols-2">
+            ${miniKV("PSI score", String(score))}
+            ${miniKV("LCP", data?.lighthouseResult?.audits?.["largest-contentful-paint"]?.displayValue || "n/a")}
+            ${miniKV("CLS", data?.lighthouseResult?.audits?.["cumulative-layout-shift"]?.displayValue || "n/a")}
+            ${miniKV("INP/TBT", data?.lighthouseResult?.audits?.["total-blocking-time"]?.displayValue || "n/a")}
+          </div>
+        `;
+      } catch (e) {
+        out.textContent = "PSI failed: " + (e?.message || "unknown error");
+      }
+    }
+
+    function renderSettingsTab() {
+      els.content.innerHTML = `
+        <div class="space-y-4">
+          ${block("Settings mirror", `
+            <div class="grid gap-3 md:grid-cols-2">
+              ${miniKV("Theme", state.theme)}
+              ${miniKV("Density", state.density)}
+              ${miniKV("Proxy", state.useProxy ? "Enabled" : "Disabled")}
+              ${miniKV("Auto analyze", state.autoAnalyze ? "On" : "Off")}
+              ${miniKV("Pagespeed key", state.pagespeedKey ? "Set" : "Not set")}
+              ${miniKV("Proxy template", state.proxyUrl || "Missing")}
+            </div>
+          `)}
+        </div>
+      `;
+    }
+
+    async function analyzeSite() {
+      const raw = els.urlInput.value.trim();
+      const normalized = normalizeUrl(raw);
+      if (!normalized) {
+        setStatus("Enter a URL first");
+        return;
+      }
+
+      state.baseUrl = normalized;
+      state.currentPageUrl = normalized;
+      state.busy = true;
+      state.pageHtml = "";
+      state.pageError = "";
+      state.robotsText = "";
+      state.robotsError = "";
+      state.sitemapUrls = [];
+      state.sitemapSources = [];
+      state.sitemapError = "";
+      state.pageInfo = null;
+      state.issues = [];
+      state.score = {
+        overall: 0,
+        technical: 0,
+        content: 0,
+        accessibility: 0,
+        social: 0,
+        crawlability: 0,
+        performance: 0
+      };
+      setStatus("Fetching site data...");
+      els.fetchModeBadge.textContent = "fetching";
+      renderSkeleton();
+
+      let robotsRes = null;
+      let pageRes = null;
+
+      const tasks = [
+        fetchText(new URL("/robots.txt", normalized).href, { timeout: 12000 }).then(r => ({ type: "robots", r })).catch(e => ({ type: "robotsError", e })),
+        fetchText(normalized, { timeout: 15000 }).then(r => ({ type: "page", r })).catch(e => ({ type: "pageError", e }))
+      ];
+
+      const results = await Promise.allSettled(tasks);
+
+      for (const settled of results) {
+        if (settled.status === "fulfilled") {
+          if (settled.value.type === "robots") robotsRes = settled.value.r;
+          if (settled.value.type === "page") pageRes = settled.value.r;
+          if (settled.value.type === "robotsError") state.robotsError = settled.value.e?.message || "robots fetch failed";
+          if (settled.value.type === "pageError") state.pageError = settled.value.e?.message || "page fetch failed";
+        }
+      }
+
+      if (robotsRes) {
+        state.robotsText = robotsRes.text || "";
+        state.fetchMode = robotsRes.mode || "direct";
+      }
+
+      if (pageRes) {
+        state.pageHtml = pageRes.text || "";
+        state.fetchMode = pageRes.mode || state.fetchMode || "direct";
+        state.pagePreviewMode = pageRes.mode === "proxy" ? "srcdoc" : "srcdoc";
+      } else if (!state.pageHtml) {
+        state.pageError = state.pageError || "Page fetch failed";
+      }
+
+      state.currentPageUrl = normalized;
+
+      try {
+        const sitemapData = await collectSitemapUrls(normalized, state.robotsText || "");
+        state.sitemapUrls = sitemapData.urls;
+        state.sitemapSources = sitemapData.childSitemaps.length ? sitemapData.childSitemaps : sitemapData.roots;
+        if (!state.sitemapUrls.length) {
+          state.sitemapError = "No sitemap URLs discovered";
+        }
+      } catch (e) {
+        state.sitemapError = e?.message || "Sitemap discovery failed";
+      }
+
+      if (state.pageHtml) {
+        try {
+          state.pageInfo = parseHtml(state.pageHtml, normalized);
+        } catch (e) {
+          state.pageError = "HTML parse failed";
+        }
+      }
+
+      if (!state.pageInfo) {
+        state.pageInfo = {
+          url: normalized,
+          title: "",
+          description: "",
+          keywords: "",
+          canonical: "",
+          robotsMeta: "",
+          viewport: "",
+          charset: "",
+          lang: "",
+          og: { title: "", description: "", image: "", url: "", type: "" },
+          twitter: { card: "", title: "", description: "", image: "" },
+          headings: [],
+          imgs: [],
+          links: [],
+          internalLinks: [],
+          externalLinks: [],
+          nofollowLinks: 0,
+          forms: 0,
+          buttons: 0,
+          scripts: 0,
+          stylesheets: 0,
+          preloads: 0,
+          hreflang: 0,
+          jsonLd: [],
+          jsonLdErrors: [],
+          altMissing: 0,
+          lazyImages: 0,
+          dimsImages: 0,
+          wordCount: 0,
+          htmlLength: state.pageHtml.length || 0,
+          textRatio: 0,
+          noindex: false,
+          nocache: false,
+          nosnippet: false,
+          noimageindex: false,
+          notranslate: false,
+          maxsnippet: false,
+          maximage: false,
+          maxvideo: false,
+          favicon: "",
+          doc: null
+        };
+      }
+
+      const robotsInfo = state.robotsText ? parseRobots(state.robotsText) : { sitemaps: [] };
+      const performanceInfo = null;
+
+      state.score = computeScores(state.pageInfo, state.sitemapUrls.length, state.robotsText, performanceInfo);
+      state.score.performance = heuristicPerformance(state.pageInfo);
+      state.score.overall = Math.round(
+        state.score.technical * 0.20 +
+        state.score.content * 0.20 +
+        state.score.accessibility * 0.15 +
+        state.score.social * 0.10 +
+        state.score.crawlability * 0.15 +
+        state.score.performance * 0.20
+      );
+
+      state.issues = getIssues(state.pageInfo, state.sitemapUrls.length, state.robotsText, state.score, state.sitemapError);
+
+      state.busy = false;
+      els.fetchModeBadge.textContent = state.fetchMode || "direct";
+      setStatus(state.pageError ? `Done with warnings: ${state.pageError}` : "Analysis complete");
+
+      renderAll();
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderIssues();
+      renderQuick();
+
+      switch (state.activeTab) {
+        case "overview": renderOverview(); break;
+        case "robots": renderRobotsTab(); break;
+        case "sitemap": renderSitemapTab(); break;
+        case "page": renderPageTab(); break;
+        case "meta": renderMetaTab(); break;
+        case "social": renderSocialTab(); break;
+        case "accessibility": renderAccessibilityTab(); break;
+        case "schema": renderSchemaTab(); break;
+        case "performance": renderPerformanceTab(); break;
+        case "settings": renderSettingsTab(); break;
+        default: renderOverview();
+      }
+
+      tabsMarkup(state.activeTab);
+    }
+
+    function setTheme(theme) {
+      state.theme = theme === "light" ? "light" : "dark";
+      document.documentElement.classList.toggle("light", state.theme === "light");
+      document.body.classList.toggle("bg-[#070b12]", state.theme !== "light");
+      document.body.classList.toggle("text-slate-100", state.theme !== "light");
+      saveSettings();
+    }
+
+    function applyDensity() {
+      const compact = state.density === "compact";
+      document.documentElement.style.fontSize = compact ? "14px" : "";
+    }
+
+    function saveSettings() {
+      const payload = {
+        theme: state.theme,
+        density: state.density,
+        useProxy: state.useProxy,
+        proxyUrl: state.proxyUrl,
+        pagespeedKey: state.pagespeedKey,
+        autoAnalyze: state.autoAnalyze
+      };
+      localStorage.setItem("seo_inspector_settings", JSON.stringify(payload));
+    }
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem("seo_inspector_settings");
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        state.theme = saved.theme || "dark";
+        state.density = saved.density || "comfortable";
+        state.useProxy = !!saved.useProxy;
+        state.proxyUrl = saved.proxyUrl || "";
+        state.pagespeedKey = saved.pagespeedKey || "";
+        state.autoAnalyze = saved.autoAnalyze !== false;
+      } catch {}
+    }
+
+    function syncSettingsUI() {
+      els.themeSelect.value = state.theme;
+      els.densitySelect.value = state.density;
+      els.useProxyToggle.checked = state.useProxy;
+      els.proxyUrlInput.value = state.proxyUrl;
+      els.pagespeedKeyInput.value = state.pagespeedKey;
+      els.autoAnalyzeToggle.checked = state.autoAnalyze;
+    }
+
+    function openSettings() {
+      els.settingsDrawer.classList.remove("hidden");
+    }
+
+    function closeSettings() {
+      els.settingsDrawer.classList.add("hidden");
+    }
+
+    function bindAnalyzeButtons() {
+      document.querySelectorAll(".analyzePageBtn").forEach(btn => {
+        btn.onclick = async () => {
+          const url = btn.dataset.pageUrl;
+          if (!url) return;
+          els.urlInput.value = url;
+          await analyzeSite();
+          state.currentPageUrl = url;
+          state.pageHtml = "";
+          state.pageError = "";
+          try {
+            const pageRes = await fetchText(url, { timeout: 15000 });
+            state.pageHtml = pageRes.text;
+            state.fetchMode = pageRes.mode || state.fetchMode;
+            state.pageInfo = parseHtml(state.pageHtml, url);
+            const robotsInfo = state.robotsText ? parseRobots(state.robotsText) : { sitemaps: [] };
+            state.score = computeScores(state.pageInfo, state.sitemapUrls.length, state.robotsText, null);
+            state.score.performance = heuristicPerformance(state.pageInfo);
+            state.score.overall = Math.round(
+              state.score.technical * 0.20 +
+              state.score.content * 0.20 +
+              state.score.accessibility * 0.15 +
+              state.score.social * 0.10 +
+              state.score.crawlability * 0.15 +
+              state.score.performance * 0.20
+            );
+            state.issues = getIssues(state.pageInfo, state.sitemapUrls.length, state.robotsText, state.score, state.sitemapError);
+            setStatus("Page loaded from sitemap");
+            renderAll();
+            state.activeTab = "page";
+            tabsMarkup(state.activeTab);
+          } catch (e) {
+            state.pageError = e?.message || "Page fetch failed";
+            setStatus("Page fetch failed");
+          }
+        };
+      });
+    }
+
+    function setTab(tab) {
+      state.activeTab = tab;
+      renderAll();
+    }
+
+    function wireUI() {
+      els.runBtn.addEventListener("click", analyzeSite);
+      els.urlInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") analyzeSite();
+      });
+
+      document.querySelectorAll(".tabBtn").forEach(btn => {
+        btn.addEventListener("click", () => setTab(btn.dataset.tab));
+      });
+
+      els.openSettingsBtn.addEventListener("click", openSettings);
+      els.closeSettingsBtn.addEventListener("click", closeSettings);
+      els.settingsOverlay.addEventListener("click", closeSettings);
+
+      els.saveSettingsBtn.addEventListener("click", () => {
+        state.theme = els.themeSelect.value;
+        state.density = els.densitySelect.value;
+        state.useProxy = els.useProxyToggle.checked;
+        state.proxyUrl = els.proxyUrlInput.value.trim();
+        state.pagespeedKey = els.pagespeedKeyInput.value.trim();
+        state.autoAnalyze = els.autoAnalyzeToggle.checked;
+        setTheme(state.theme);
+        applyDensity();
+        saveSettings();
+        closeSettings();
+        setStatus("Settings saved");
+        renderAll();
+      });
+    }
+
+    function initApp() {
+      loadSettings();
+      setTheme(state.theme);
+      applyDensity();
+      syncSettingsUI();
+      wireUI();
+      renderAll();
+
+      els.urlInput.value = "https://nishudevportfolio.vercel.app/";
+      setStatus("Ready");
+      els.fetchModeBadge.textContent = "direct";
+
+      if (state.autoAnalyze) {
+        analyzeSite().catch(() => {});
+      }
+    }
+
+    initApp();
+  </script>
 </body>
 </html>
