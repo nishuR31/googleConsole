@@ -1,470 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SEO Inspector Pro</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root {
-      color-scheme: dark;
-    }
-    html.light {
-      color-scheme: light;
-    }
-    html.light body {
-      background: #f8fafc;
-      color: #0f172a;
-    }
-    html.light .panel {
-      background: #ffffff;
-      border-color: #e2e8f0;
-    }
-    html.light .muted {
-      color: #475569;
-    }
-    html.light .subtle {
-      color: #64748b;
-    }
-    html.light .soft {
-      background: #f8fafc;
-      border-color: #e2e8f0;
-    }
-    .scrollbar::-webkit-scrollbar { height: 10px; width: 10px; }
-    .scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
-    .scrollbar::-webkit-scrollbar-track { background: transparent; }
-    .tab-active {
-      border-color: #3b82f6 !important;
-      background: rgba(59,130,246,.12);
-      color: #fff;
-    }
-    html.light .tab-active {
-      color: #0f172a;
-      background: rgba(59,130,246,.08);
-    }
-    .ring-gauge {
-      background: conic-gradient(var(--gauge-color) var(--gauge-deg), #1f2937 0deg);
-    }
-    html.light .ring-gauge {
-      background: conic-gradient(var(--gauge-color) var(--gauge-deg), #e2e8f0 0deg);
-    }
-    .line-clamp-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .skeleton {
-      position: relative;
-      overflow: hidden;
-      background: #111827;
-    }
-    html.light .skeleton { background: #e2e8f0; }
-    .skeleton::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      transform: translateX(-100%);
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
-      animation: shimmer 1.2s infinite;
-    }
-    @keyframes shimmer {
-      100% { transform: translateX(100%); }
-    }
-  </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO Inspector Pro</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="min-h-screen bg-[#070b12] text-slate-100">
-  <div class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#070b12]/95 backdrop-blur">
-    <div class="mx-auto max-w-7xl px-3 py-3 md:px-4">
-      <div class="flex flex-col gap-3">
-        <div class="flex items-center justify-between gap-2">
-          <div>
-            <h1 class="text-lg font-semibold tracking-tight md:text-2xl">SEO Inspector Pro</h1>
-            <p class="text-xs text-slate-400 md:text-sm">crawl, preview, diagnose, and score a site in one panel</p>
-          </div>
-          <button id="openSettingsBtn" class="rounded-xl border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 md:text-sm">
-            Settings
-          </button>
-        </div>
+<body class="bg-[#05080f] text-white min-h-screen">
 
-        <div class="flex flex-col gap-2 md:flex-row">
-          <input id="urlInput" type="url" placeholder="https://example.com"
-            class="w-full flex-1 rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm outline-none ring-0 placeholder:text-slate-500 focus:border-blue-500 md:text-base" />
-          <button id="runBtn"
-            class="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 active:bg-blue-700 md:w-36 md:text-base">
-            Run
-          </button>
-        </div>
+<!-- TOAST -->
+<div id="toast" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-        <div class="flex items-center justify-between gap-3">
-          <div id="status" class="text-xs text-slate-400 md:text-sm">Idle</div>
-          <div id="fetchModeBadge" class="rounded-full border border-slate-700 px-3 py-1 text-[11px] text-slate-400">
-            direct
-          </div>
-        </div>
+<!-- HEADER -->
+<div class="p-4 border-b border-slate-800 sticky top-0 bg-[#05080f] z-40">
+  <div class="flex flex-col gap-3 md:flex-row md:items-center">
 
-        <div class="scrollbar -mx-1 overflow-x-auto pb-1">
-          <div class="flex min-w-max gap-2 px-1">
-            <button data-tab="overview" class="tabBtn tab-active rounded-xl border border-slate-700 px-4 py-2 text-sm">Overview</button>
-            <button data-tab="robots" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Robots</button>
-            <button data-tab="sitemap" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Sitemap</button>
-            <button data-tab="page" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Page</button>
-            <button data-tab="meta" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Meta</button>
-            <button data-tab="social" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Social</button>
-            <button data-tab="accessibility" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Accessibility</button>
-            <button data-tab="schema" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Schema</button>
-            <button data-tab="performance" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Performance</button>
-            <button data-tab="settings" class="tabBtn rounded-xl border border-slate-700 px-4 py-2 text-sm">Settings</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <input id="url" placeholder="https://example.com"
+      class="flex-1 p-3 bg-[#0c1220] border border-slate-700 rounded"/>
+
+    <button id="run"
+      class="bg-blue-600 px-6 py-3 rounded font-semibold">
+      Run
+    </button>
+
+    <button id="settingsBtn"
+      class="border border-slate-700 px-4 py-3 rounded">
+      Settings
+    </button>
   </div>
 
-  <main class="mx-auto max-w-7xl px-3 py-4 md:px-4 md:py-6">
-    <div id="root" class="grid gap-4 md:grid-cols-[340px_minmax(0,1fr)]">
-      <aside class="space-y-4">
-        <section id="summaryPanel" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10"></section>
-        <section id="issuePanel" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10"></section>
-        <section id="quickPanel" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10"></section>
-      </aside>
+  <div class="flex justify-between mt-2 text-sm text-slate-400">
+    <span id="status">Idle</span>
+    <span id="mode">direct</span>
+  </div>
+</div>
 
-      <section class="min-w-0 space-y-4">
-        <div id="content" class="panel rounded-2xl border border-slate-800 bg-[#0b1220] p-4 shadow-xl shadow-black/10 md:p-5"></div>
-      </section>
-    </div>
-  </main>
+<!-- MAIN -->
+<div class="p-4 grid gap-4 md:grid-cols-[280px_1fr]">
 
-  <div id="settingsDrawer" class="fixed inset-0 z-40 hidden">
-    <div id="settingsOverlay" class="absolute inset-0 bg-black/70"></div>
-    <div class="absolute right-0 top-0 h-full w-full max-w-lg overflow-y-auto border-l border-slate-800 bg-[#08101c] p-4 shadow-2xl shadow-black/50">
-      <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
-        <h2 class="text-lg font-semibold">Settings</h2>
-        <button id="closeSettingsBtn" class="rounded-lg border border-slate-700 px-3 py-2 text-sm hover:bg-slate-800">Close</button>
-      </div>
+  <!-- SIDEBAR -->
+  <div class="space-y-4">
 
-      <div class="mt-4 space-y-4">
-        <label class="block">
-          <span class="mb-2 block text-sm text-slate-300">Theme</span>
-          <select id="themeSelect" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none">
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-          </select>
-        </label>
+    <div id="summary" class="bg-[#0c1220] p-4 rounded"></div>
+    <div id="issues" class="bg-[#0c1220] p-4 rounded"></div>
 
-        <label class="block">
-          <span class="mb-2 block text-sm text-slate-300">Density</span>
-          <select id="densitySelect" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none">
-            <option value="comfortable">Comfortable</option>
-            <option value="compact">Compact</option>
-          </select>
-        </label>
-
-        <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-800 p-3">
-          <div>
-            <div class="text-sm font-medium">Use proxy for cross-origin fetch</div>
-            <div class="text-xs text-slate-400">Needed for real page data when CORS blocks direct access.</div>
-          </div>
-          <input id="useProxyToggle" type="checkbox" class="h-5 w-5 accent-blue-500">
-        </label>
-
-        <label class="block">
-          <span class="mb-2 block text-sm text-slate-300">Proxy endpoint template</span>
-          <input id="proxyUrlInput" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none"
-            placeholder="https://your-domain.com/api/fetch?url={{url}}">
-          <div class="mt-2 text-xs text-slate-500">
-            Use <code>{{url}}</code> as the placeholder. The endpoint must return raw text for the requested URL.
-          </div>
-        </label>
-
-        <label class="block">
-          <span class="mb-2 block text-sm text-slate-300">PageSpeed API key (optional)</span>
-          <input id="pagespeedKeyInput" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-3 text-sm outline-none"
-            placeholder="AIza...">
-          <div class="mt-2 text-xs text-slate-500">
-            Used only for real PSI scoring. Without a key, heuristic performance scoring is shown.
-          </div>
-        </label>
-
-        <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-800 p-3">
-          <div>
-            <div class="text-sm font-medium">Auto analyze on Run</div>
-            <div class="text-xs text-slate-400">Refreshes summary and page module automatically.</div>
-          </div>
-          <input id="autoAnalyzeToggle" type="checkbox" class="h-5 w-5 accent-blue-500">
-        </label>
-
-        <button id="saveSettingsBtn" class="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500">
-          Save settings
-        </button>
-
-        <div class="rounded-2xl border border-slate-800 bg-slate-950 p-4 text-sm text-slate-300">
-          <div class="font-medium text-slate-100">Reality check</div>
-          <p class="mt-2 text-slate-400">
-            Full cross-origin inspection is blocked by browsers unless you use a proxy. This UI handles that cleanly instead of lying with fake zeroes.
-          </p>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <script>
-    // ===== SAFE WRAPPER =====
-function safe(fn){
-  return async (...args)=>{
+  <!-- CONTENT -->
+  <div>
+
+    <!-- TABS -->
+    <div class="flex gap-2 overflow-auto mb-4">
+      <button class="tab px-3 py-2 border rounded" data-tab="overview">Overview</button>
+      <button class="tab px-3 py-2 border rounded" data-tab="page">Page</button>
+      <button class="tab px-3 py-2 border rounded" data-tab="sitemap">Sitemap</button>
+      <button class="tab px-3 py-2 border rounded" data-tab="robots">Robots</button>
+      <button class="tab px-3 py-2 border rounded" data-tab="performance">Performance</button>
+    </div>
+
+    <div id="content"></div>
+
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="hidden fixed inset-0 bg-black/70 z-50 flex justify-end">
+  <div class="bg-[#0c1220] w-full max-w-md p-4">
+
+    <h2 class="text-lg mb-4">Settings</h2>
+
+    <label class="block mb-2">Use Proxy</label>
+    <input id="useProxy" type="checkbox" class="mb-4">
+
+    <label class="block mb-2">Proxy URL</label>
+    <input id="proxy" class="w-full p-2 bg-black border mb-4"
+      placeholder="https://api.allorigins.win/raw?url={{url}}">
+
+    <label class="block mb-2">PageSpeed API Key</label>
+    <input id="psi" class="w-full p-2 bg-black border mb-4">
+
+    <button id="saveSettings" class="bg-blue-600 w-full py-2 rounded">Save</button>
+
+  </div>
+</div>
+
+<script>
+
+// ===== STATE =====
+const state = {
+  tab:"overview",
+  url:"",
+  html:"",
+  page:null,
+  sitemap:[],
+  robots:"",
+  score:0,
+  useProxy:false,
+  proxy:"",
+  psi:"",
+  psiScore:null
+};
+
+// ===== UTILS =====
+const $ = id => document.getElementById(id);
+
+function toast(msg,type="info"){
+  const el=document.createElement("div");
+  el.className="bg-blue-600 px-3 py-2 rounded text-sm";
+  el.innerText=msg;
+  $("toast").appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+function normalize(url){
+  return url.startsWith("http")?url:"https://"+url;
+}
+
+function setStatus(s){ $("status").innerText=s }
+
+// ===== FETCH =====
+async function fetchSafe(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok) throw "";
+    $("mode").innerText="direct";
+    return await r.text();
+  }catch{
     try{
-      return await fn(...args);
-    }catch(e){
-      console.error(e);
-      setStatus("Error: "+(e.message||"Unknown"));
+      const proxy = state.proxy || "https://api.allorigins.win/raw?url={{url}}";
+      const u = proxy.replace("{{url}}",encodeURIComponent(url));
+      const r=await fetch(u);
+      $("mode").innerText="proxy";
+      toast("Proxy used","warn");
+      return await r.text();
+    }catch{
+      throw new Error("CORS blocked");
     }
   }
 }
 
-// ===== STATUS =====
-function setStatus(msg){
-  els.status.innerText = msg;
+// ===== PARSE =====
+function parseHTML(html){
+  const d=new DOMParser().parseFromString(html,"text/html");
+  return {
+    title:d.title||"",
+    desc:d.querySelector("meta[name=description]")?.content||"",
+    h1:d.querySelectorAll("h1").length,
+    imgs:d.querySelectorAll("img").length,
+    alt:[...d.querySelectorAll("img")].filter(i=>!i.alt).length,
+    links:d.querySelectorAll("a").length
+  }
 }
 
-// ===== FETCH BADGE =====
-function updateFetchBadge(){
-  els.fetchModeBadge.innerText = state.fetchMode;
+function parseSitemap(xml){
+  const d=new DOMParser().parseFromString(xml,"text/xml");
+  return [...d.getElementsByTagName("loc")].map(x=>x.textContent);
 }
 
 // ===== RUN =====
-els.runBtn.onclick = safe(async ()=>{
-
-  const url = normalizeUrl(els.urlInput.value);
-  if(!url){
-    setStatus("Enter URL");
-    return;
-  }
-
-  state.baseUrl = url;
-  state.currentPageUrl = url;
-
-  setStatus("Loading...");
-  renderSkeleton();
-
-  // RESET
-  state.pageHtml="";
-  state.pageInfo=null;
-  state.sitemapUrls=[];
-  state.robotsText="";
-
-  // PAGE
+$("run").onclick = async ()=>{
   try{
-    const res = await fetchText(url);
-    state.fetchMode = res.mode;
-    updateFetchBadge();
+    const input=$("url").value.trim();
+    if(!input) return toast("Enter URL");
 
-    state.pageHtml = res.text;
-    state.pageInfo = parseHtml(res.text,url);
+    state.url=normalize(input);
 
-  }catch{
-    state.pageError="fail";
+    setStatus("Loading...");
+    renderLoading();
+
+    // PAGE
+    try{
+      const html=await fetchSafe(state.url);
+      state.html=html;
+      state.page=parseHTML(html);
+    }catch{ toast("Page failed") }
+
+    // SITEMAP
+    try{
+      const sm=await fetchSafe(state.url+"/sitemap.xml");
+      state.sitemap=parseSitemap(sm);
+    }catch{ toast("No sitemap") }
+
+    // ROBOTS
+    try{
+      state.robots=await fetchSafe(state.url+"/robots.txt");
+    }catch{}
+
+    computeScore();
+    render();
+
+    setStatus("Done");
+
+  }catch(e){
+    setStatus("Error");
+    toast(e.message,"error");
   }
+};
 
-  // ROBOTS
-  try{
-    const r = await fetchText(url+"/robots.txt");
-    state.robotsText = r.text;
-  }catch{
-    state.robotsText="";
-  }
+// ===== SCORE =====
+function computeScore(){
+  const p=state.page;
+  if(!p) return;
 
-  // SITEMAP
-  try{
-    const sm = await collectSitemapUrls(url,state.robotsText);
-    state.sitemapUrls = sm.urls;
-    state.sitemapSources = sm.childSitemaps;
-  }catch{}
+  let score=0;
+  if(p.title) score+=20;
+  if(p.desc) score+=20;
+  if(p.h1===1) score+=20;
+  if(p.alt===0) score+=20;
+  if(state.sitemap.length>0) score+=20;
 
-  // SCORE
-  if(state.pageInfo){
-    const scores = computeScores(
-      state.pageInfo,
-      state.sitemapUrls.length,
-      state.robotsText
-    );
-
-    state.score = {
-      overall: scores.overall,
-      technical: scores.technicalScore,
-      content: scores.contentScore,
-      accessibility: scores.accessibilityScore,
-      social: scores.socialScore,
-      crawlability: scores.crawlScore,
-      performance: scores.performanceScore
-    };
-
-    state.issues = getIssues(
-      state.pageInfo,
-      state.sitemapUrls.length,
-      state.robotsText,
-      scores
-    );
-  }
-
-  renderAll();
-  setStatus("Done");
-});
-
-
-// ===== CENTRAL RENDER =====
-function renderAll(){
-  tabsMarkup(state.activeTab);
-  renderSummary();
-  renderIssues();
-  renderQuick();
-
-  switch(state.activeTab){
-    case "overview": renderOverview(); break;
-    case "robots": renderRobotsTab(); break;
-    case "sitemap": renderSitemapTab(); break;
-    case "page": renderPageTab(); break;
-    case "meta": renderMetaTab(); break;
-    case "social": renderSocialTab(); break;
-    case "accessibility": renderAccessibilityTab(); break;
-    case "schema": renderSchemaTab(); break;
-    case "performance": renderPerformanceTab(); break;
-    case "settings": openSettings(); break;
-  }
+  state.score=score;
 }
 
+// ===== RENDER =====
+function renderLoading(){
+  $("content").innerHTML="<div class='animate-pulse h-40 bg-gray-800'></div>";
+}
 
-// ===== TAB BIND =====
-document.querySelectorAll(".tabBtn").forEach(btn=>{
-  btn.onclick = ()=>{
-    state.activeTab = btn.dataset.tab;
-    renderAll();
+function render(){
+  renderSummary();
+  renderIssues();
+
+  if(state.tab==="overview") renderOverview();
+  if(state.tab==="page") renderPage();
+  if(state.tab==="sitemap") renderSitemap();
+  if(state.tab==="robots") renderRobots();
+  if(state.tab==="performance") renderPerf();
+}
+
+function renderSummary(){
+  $("summary").innerHTML=`
+    <div>Score: ${state.score}</div>
+    <div>Sitemap: ${state.sitemap.length}</div>
+  `;
+}
+
+function renderIssues(){
+  $("issues").innerHTML=`
+    <div>Missing ALT: ${state.page?.alt||0}</div>
+  `;
+}
+
+function renderOverview(){
+  $("content").innerHTML=`
+    <div class="grid gap-3">
+      <div>Title: ${state.page?.title}</div>
+      <div>Description: ${state.page?.desc}</div>
+    </div>
+  `;
+}
+
+function renderPage(){
+  $("content").innerHTML=`
+    <iframe class="w-full h-96 bg-white" srcdoc="${state.html.replace(/"/g,'&quot;')}"></iframe>
+  `;
+}
+
+function renderSitemap(){
+  $("content").innerHTML=state.sitemap.slice(0,20).join("<br>");
+}
+
+function renderRobots(){
+  $("content").innerText=state.robots;
+}
+
+function renderPerf(){
+  $("content").innerHTML=`
+    <button id="psiBtn" class="bg-blue-600 px-4 py-2 rounded">Run PSI</button>
+    <div>${state.psiScore||"Not run"}</div>
+  `;
+
+  $("psiBtn").onclick=async()=>{
+    if(!state.psi) return toast("Add API key");
+
+    const res=await fetch(
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(state.url)}&key=${state.psi}`
+    );
+    const d=await res.json();
+    state.psiScore=Math.round(d.lighthouseResult.categories.performance.score*100);
+    renderPerf();
+  };
+}
+
+// ===== TABS =====
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.onclick=()=>{
+    state.tab=btn.dataset.tab;
+    render();
   };
 });
 
-
 // ===== SETTINGS =====
-function openSettings(){
-  els.settingsDrawer.classList.remove("hidden");
-}
-function closeSettings(){
-  els.settingsDrawer.classList.add("hidden");
-}
+$("settingsBtn").onclick=()=> $("settings").classList.remove("hidden");
+$("saveSettings").onclick=()=>{
+  state.useProxy=$("useProxy").checked;
+  state.proxy=$("proxy").value;
+  state.psi=$("psi").value;
 
-els.openSettingsBtn.onclick = openSettings;
-els.closeSettingsBtn.onclick = closeSettings;
-els.settingsOverlay.onclick = closeSettings;
-
-els.saveSettingsBtn.onclick = ()=>{
-  state.theme = els.themeSelect.value;
-  state.density = els.densitySelect.value;
-  state.useProxy = els.useProxyToggle.checked;
-  state.proxyUrl = els.proxyUrlInput.value;
-  state.pagespeedKey = els.pagespeedKeyInput.value;
-  state.autoAnalyze = els.autoAnalyzeToggle.checked;
-
-  localStorage.setItem("seoSettings", JSON.stringify(state));
-
-  closeSettings();
+  localStorage.setItem("seo",JSON.stringify(state));
+  $("settings").classList.add("hidden");
 };
 
+// LOAD SETTINGS
+(()=>{
+  const s=JSON.parse(localStorage.getItem("seo")||"{}");
+  Object.assign(state,s);
 
-// ===== LOAD SETTINGS =====
-(function(){
-  try{
-    const s = JSON.parse(localStorage.getItem("seoSettings")||"{}");
-
-    Object.assign(state,s);
-
-    els.themeSelect.value = state.theme || "dark";
-    els.densitySelect.value = state.density || "comfortable";
-    els.useProxyToggle.checked = state.useProxy || false;
-    els.proxyUrlInput.value = state.proxyUrl || "";
-    els.pagespeedKeyInput.value = state.pagespeedKey || "";
-    els.autoAnalyzeToggle.checked = state.autoAnalyze ?? true;
-
-  }catch{}
+  $("useProxy").checked=state.useProxy;
+  $("proxy").value=state.proxy||"";
+  $("psi").value=state.psi||"";
 })();
 
+</script>
 
-// ===== ANALYZE PAGE BUTTON =====
-function bindAnalyzeButtons(){
-  document.querySelectorAll(".analyzePageBtn").forEach(btn=>{
-    btn.onclick = safe(async ()=>{
-      const url = btn.dataset.pageUrl;
-      state.currentPageUrl = url;
-
-      setStatus("Loading page...");
-      renderSkeleton();
-
-      const res = await fetchText(url);
-      state.pageHtml = res.text;
-      state.pageInfo = parseHtml(res.text,url);
-
-      renderAll();
-      setStatus("Page loaded");
-    });
-  });
-}
-
-
-// ===== PERFORMANCE TAB FIX (YOUR BROKEN PART) =====
-function renderPerformanceTab(){
-  const p = state.pageInfo;
-  if(!p){
-    els.content.innerHTML = `<div>No page loaded</div>`;
-    return;
-  }
-
-  const heuristic = heuristicPerformance(p);
-
-  els.content.innerHTML = `
-    <div class="space-y-4">
-
-      ${statCard("Heuristic Score", heuristic)}
-
-      <button id="runPsiBtn"
-        class="rounded-xl bg-blue-600 px-4 py-3 text-white">
-        Run PageSpeed
-      </button>
-
-      <div id="psiResult" class="text-sm text-slate-400">
-        ${state.psiScore ? "Score: "+state.psiScore : "Not run"}
-      </div>
-
-    </div>
-  `;
-
-  const btn = document.getElementById("runPsiBtn");
-
-  if(btn){
-    btn.onclick = safe(async ()=>{
-
-      if(!state.pagespeedKey){
-        setStatus("Add API key in settings");
-        return;
-      }
-
-      setStatus("Running PSI...");
-
-      const api = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(state.currentPageUrl)}&key=${state.pagespeedKey}`;
-
-      const res = await fetch(api);
-      const data = await res.json();
-
-      const score = Math.round(
-        (data.lighthouseResult.categories.performance.score || 0)*100
-      );
-
-      state.psiScore = score;
-
-      renderPerformanceTab();
-      setStatus("PSI Done");
-    });
-  }
-}
-  </script>
 </body>
 </html>
-
-                                    
