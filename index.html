@@ -8,79 +8,32 @@
 
 <body class="bg-[#05080f] text-white min-h-screen">
 
-<!-- TOAST -->
 <div id="toast" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-<!-- HEADER -->
-<div class="p-4 border-b border-slate-800 sticky top-0 bg-[#05080f] z-40">
-  <div class="flex flex-col gap-3 md:flex-row md:items-center">
-
-    <input id="url" placeholder="https://example.com"
-      class="flex-1 p-3 bg-[#0c1220] border border-slate-700 rounded"/>
-
-    <button id="run"
-      class="bg-blue-600 px-6 py-3 rounded font-semibold">
-      Run
-    </button>
-
-    <button id="settingsBtn"
-      class="border border-slate-700 px-4 py-3 rounded">
-      Settings
-    </button>
+<div class="p-4 border-b border-slate-800 sticky top-0 bg-[#05080f]">
+  <div class="flex flex-col md:flex-row gap-2">
+    <input id="url" class="flex-1 p-3 bg-[#0c1220] border border-slate-700 rounded"
+      placeholder="https://example.com">
+    <button id="run" class="bg-blue-600 px-4 py-3 rounded">Run</button>
   </div>
-
-  <div class="flex justify-between mt-2 text-sm text-slate-400">
+  <div class="flex justify-between text-xs mt-2 text-slate-400">
     <span id="status">Idle</span>
     <span id="mode">direct</span>
   </div>
 </div>
 
-<!-- MAIN -->
-<div class="p-4 grid gap-4 md:grid-cols-[280px_1fr]">
-
-  <!-- SIDEBAR -->
+<div class="p-4 grid gap-4 md:grid-cols-[250px_1fr]">
   <div class="space-y-4">
-
-    <div id="summary" class="bg-[#0c1220] p-4 rounded"></div>
-    <div id="issues" class="bg-[#0c1220] p-4 rounded"></div>
-
+    <div id="summary" class="bg-[#0c1220] p-3 rounded"></div>
   </div>
 
-  <!-- CONTENT -->
   <div>
-
-    <!-- TABS -->
-    <div class="flex gap-2 overflow-auto mb-4">
-      <button class="tab px-3 py-2 border rounded" data-tab="overview">Overview</button>
-      <button class="tab px-3 py-2 border rounded" data-tab="page">Page</button>
-      <button class="tab px-3 py-2 border rounded" data-tab="sitemap">Sitemap</button>
-      <button class="tab px-3 py-2 border rounded" data-tab="robots">Robots</button>
-      <button class="tab px-3 py-2 border rounded" data-tab="performance">Performance</button>
+    <div class="flex gap-2 overflow-auto mb-3 text-sm">
+      <button class="tab border px-3 py-2 rounded" data-tab="overview">Overview</button>
+      <button class="tab border px-3 py-2 rounded" data-tab="sitemap">Sitemap</button>
+      <button class="tab border px-3 py-2 rounded" data-tab="robots">Robots</button>
     </div>
-
     <div id="content"></div>
-
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div id="settings" class="hidden fixed inset-0 bg-black/70 z-50 flex justify-end">
-  <div class="bg-[#0c1220] w-full max-w-md p-4">
-
-    <h2 class="text-lg mb-4">Settings</h2>
-
-    <label class="block mb-2">Use Proxy</label>
-    <input id="useProxy" type="checkbox" class="mb-4">
-
-    <label class="block mb-2">Proxy URL</label>
-    <input id="proxy" class="w-full p-2 bg-black border mb-4"
-      placeholder="https://api.allorigins.win/raw?url={{url}}">
-
-    <label class="block mb-2">PageSpeed API Key</label>
-    <input id="psi" class="w-full p-2 bg-black border mb-4">
-
-    <button id="saveSettings" class="bg-blue-600 w-full py-2 rounded">Save</button>
-
   </div>
 </div>
 
@@ -90,33 +43,21 @@
 const state = {
   tab:"overview",
   url:"",
-  html:"",
   page:null,
   sitemap:[],
-  robots:"",
-  score:0,
-  useProxy:false,
-  proxy:"",
-  psi:"",
-  psiScore:null
+  robots:""
 };
 
-// ===== UTILS =====
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 
-function toast(msg,type="info"){
+// ===== TOAST =====
+function toast(msg){
   const el=document.createElement("div");
   el.className="bg-blue-600 px-3 py-2 rounded text-sm";
   el.innerText=msg;
   $("toast").appendChild(el);
   setTimeout(()=>el.remove(),3000);
 }
-
-function normalize(url){
-  return url.startsWith("http")?url:"https://"+url;
-}
-
-function setStatus(s){ $("status").innerText=s }
 
 // ===== FETCH =====
 async function fetchSafe(url){
@@ -126,16 +67,10 @@ async function fetchSafe(url){
     $("mode").innerText="direct";
     return await r.text();
   }catch{
-    try{
-      const proxy = state.proxy || "https://api.allorigins.win/raw?url={{url}}";
-      const u = proxy.replace("{{url}}",encodeURIComponent(url));
-      const r=await fetch(u);
-      $("mode").innerText="proxy";
-      toast("Proxy used","warn");
-      return await r.text();
-    }catch{
-      throw new Error("CORS blocked");
-    }
+    const proxy="https://api.allorigins.win/raw?url="+encodeURIComponent(url);
+    const r=await fetch(proxy);
+    $("mode").innerText="proxy";
+    return await r.text();
   }
 }
 
@@ -143,173 +78,140 @@ async function fetchSafe(url){
 function parseHTML(html){
   const d=new DOMParser().parseFromString(html,"text/html");
   return {
-    title:d.title||"",
-    desc:d.querySelector("meta[name=description]")?.content||"",
-    h1:d.querySelectorAll("h1").length,
-    imgs:d.querySelectorAll("img").length,
-    alt:[...d.querySelectorAll("img")].filter(i=>!i.alt).length,
-    links:d.querySelectorAll("a").length
-  }
+    title:d.title,
+    desc:d.querySelector("meta[name=description]")?.content || ""
+  };
 }
 
 function parseSitemap(xml){
   const d=new DOMParser().parseFromString(xml,"text/xml");
-  return [...d.getElementsByTagName("loc")].map(x=>x.textContent);
+  return [...d.getElementsByTagName("loc")].map(n=>n.textContent);
+}
+
+// ===== 🔥 FIXED ROBOTS PARSER =====
+function extractSitemaps(robots){
+  const lines = robots.split("\n");
+  const sitemaps = [];
+
+  for(const line of lines){
+    const match = line.match(/^\s*Sitemap:\s*(.+)$/i);
+    if(match){
+      sitemaps.push(match[1].trim());
+    }
+  }
+
+  return sitemaps;
+}
+
+// ===== 🔥 FIXED SITEMAP FLOW =====
+async function getSitemap(base){
+
+  let sitemapUrls = [];
+
+  try{
+    const robots = await fetchSafe(base+"/robots.txt");
+    state.robots = robots;
+
+    const sitemapLinks = extractSitemaps(robots);
+
+    if(sitemapLinks.length){
+      toast("Sitemap found in robots");
+
+      for(const link of sitemapLinks){
+        try{
+          const xml = await fetchSafe(link);
+          const urls = parseSitemap(xml);
+          sitemapUrls.push(...urls);
+        }catch{}
+      }
+
+      return [...new Set(sitemapUrls)];
+    }
+
+  }catch{
+    toast("robots fetch failed");
+  }
+
+  // fallback
+  const fallback = ["/sitemap.xml","/sitemap_index.xml"];
+
+  for(const p of fallback){
+    try{
+      const xml = await fetchSafe(base+p);
+      const urls = parseSitemap(xml);
+      if(urls.length) return urls;
+    }catch{}
+  }
+
+  return [];
 }
 
 // ===== RUN =====
 $("run").onclick = async ()=>{
+  const input=$("url").value.trim();
+  if(!input) return toast("Enter URL");
+
+  const url = input.startsWith("http")?input:"https://"+input;
+  state.url = url;
+
+  $("status").innerText="Loading...";
+
   try{
-    const input=$("url").value.trim();
-    if(!input) return toast("Enter URL");
+    const html = await fetchSafe(url);
+    state.page = parseHTML(html);
 
-    state.url=normalize(input);
+    state.sitemap = await getSitemap(url);
 
-    setStatus("Loading...");
-    renderLoading();
+    if(state.sitemap.length){
+      toast("Sitemap loaded: "+state.sitemap.length);
+    }else{
+      toast("Sitemap not accessible (CORS or dynamic)");
+    }
 
-    // PAGE
-    try{
-      const html=await fetchSafe(state.url);
-      state.html=html;
-      state.page=parseHTML(html);
-    }catch{ toast("Page failed") }
-
-    // SITEMAP
-    try{
-      const sm=await fetchSafe(state.url+"/sitemap.xml");
-      state.sitemap=parseSitemap(sm);
-    }catch{ toast("No sitemap") }
-
-    // ROBOTS
-    try{
-      state.robots=await fetchSafe(state.url+"/robots.txt");
-    }catch{}
-
-    computeScore();
     render();
-
-    setStatus("Done");
+    $("status").innerText="Done";
 
   }catch(e){
-    setStatus("Error");
-    toast(e.message,"error");
+    $("status").innerText="Error";
+    toast(e.message);
   }
 };
 
-// ===== SCORE =====
-function computeScore(){
-  const p=state.page;
-  if(!p) return;
-
-  let score=0;
-  if(p.title) score+=20;
-  if(p.desc) score+=20;
-  if(p.h1===1) score+=20;
-  if(p.alt===0) score+=20;
-  if(state.sitemap.length>0) score+=20;
-
-  state.score=score;
-}
-
-// ===== RENDER =====
-function renderLoading(){
-  $("content").innerHTML="<div class='animate-pulse h-40 bg-gray-800'></div>";
-}
-
+// ===== UI =====
 function render(){
-  renderSummary();
-  renderIssues();
 
-  if(state.tab==="overview") renderOverview();
-  if(state.tab==="page") renderPage();
-  if(state.tab==="sitemap") renderSitemap();
-  if(state.tab==="robots") renderRobots();
-  if(state.tab==="performance") renderPerf();
-}
-
-function renderSummary(){
   $("summary").innerHTML=`
-    <div>Score: ${state.score}</div>
-    <div>Sitemap: ${state.sitemap.length}</div>
-  `;
-}
-
-function renderIssues(){
-  $("issues").innerHTML=`
-    <div>Missing ALT: ${state.page?.alt||0}</div>
-  `;
-}
-
-function renderOverview(){
-  $("content").innerHTML=`
-    <div class="grid gap-3">
-      <div>Title: ${state.page?.title}</div>
-      <div>Description: ${state.page?.desc}</div>
-    </div>
-  `;
-}
-
-function renderPage(){
-  $("content").innerHTML=`
-    <iframe class="w-full h-96 bg-white" srcdoc="${state.html.replace(/"/g,'&quot;')}"></iframe>
-  `;
-}
-
-function renderSitemap(){
-  $("content").innerHTML=state.sitemap.slice(0,20).join("<br>");
-}
-
-function renderRobots(){
-  $("content").innerText=state.robots;
-}
-
-function renderPerf(){
-  $("content").innerHTML=`
-    <button id="psiBtn" class="bg-blue-600 px-4 py-2 rounded">Run PSI</button>
-    <div>${state.psiScore||"Not run"}</div>
+    <div>Title: ${state.page?.title||""}</div>
+    <div>Sitemap URLs: ${state.sitemap.length}</div>
   `;
 
-  $("psiBtn").onclick=async()=>{
-    if(!state.psi) return toast("Add API key");
+  if(state.tab==="overview"){
+    $("content").innerHTML=`
+      <div class="text-sm space-y-2">
+        <div>${state.page?.title}</div>
+        <div>${state.page?.desc}</div>
+      </div>
+    `;
+  }
 
-    const res=await fetch(
-      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(state.url)}&key=${state.psi}`
-    );
-    const d=await res.json();
-    state.psiScore=Math.round(d.lighthouseResult.categories.performance.score*100);
-    renderPerf();
-  };
+  if(state.tab==="sitemap"){
+    $("content").innerHTML = state.sitemap.length
+      ? state.sitemap.slice(0,30).join("<br>")
+      : "No sitemap";
+  }
+
+  if(state.tab==="robots"){
+    $("content").innerText = state.robots;
+  }
 }
 
 // ===== TABS =====
-document.querySelectorAll(".tab").forEach(btn=>{
-  btn.onclick=()=>{
-    state.tab=btn.dataset.tab;
+document.querySelectorAll(".tab").forEach(b=>{
+  b.onclick=()=>{
+    state.tab=b.dataset.tab;
     render();
   };
 });
-
-// ===== SETTINGS =====
-$("settingsBtn").onclick=()=> $("settings").classList.remove("hidden");
-$("saveSettings").onclick=()=>{
-  state.useProxy=$("useProxy").checked;
-  state.proxy=$("proxy").value;
-  state.psi=$("psi").value;
-
-  localStorage.setItem("seo",JSON.stringify(state));
-  $("settings").classList.add("hidden");
-};
-
-// LOAD SETTINGS
-(()=>{
-  const s=JSON.parse(localStorage.getItem("seo")||"{}");
-  Object.assign(state,s);
-
-  $("useProxy").checked=state.useProxy;
-  $("proxy").value=state.proxy||"";
-  $("psi").value=state.psi||"";
-})();
 
 </script>
 
